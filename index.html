@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AspirAction 2.0 - Sistem Aspirasi Real-Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="shared.css">
+</head>
+
+<body class="antialiased flex flex-col min-h-screen">
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div class="clay-card p-10 max-w-4xl w-full text-center fade-in">
+            <div
+                class="w-24 h-24 bg-gradient-to-tr from-blue-500 to-yellow-400 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg transform hover:rotate-12 transition duration-500">
+                <i class="ph-fill ph-microphone-stage text-5xl text-white"></i>
+            </div>
+            <h1
+                class="text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
+                AspirAction 2.0</h1>
+            <p class="text-xl text-gray-600 mb-10">Sistem Aspirasi Cerdas & Interaktif Secara Real-Time</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href="student.html"
+                    class="clay-card p-6 flex flex-col items-center gap-4 hover:-translate-y-2 transition cursor-pointer group no-underline text-inherit">
+                    <i
+                        class="ph-duotone ph-device-mobile-speaker text-5xl text-blue-500 group-hover:text-yellow-500 transition"></i>
+                    <h2 class="text-2xl font-bold">Portal Siswa</h2>
+                    <p class="text-sm text-gray-500">Kirim aspirasi anonim dan lakukan live voting dari HP.</p>
+                </a>
+
+                <a href="projector.html"
+                    class="clay-card p-6 flex flex-col items-center gap-4 hover:-translate-y-2 transition cursor-pointer group no-underline text-inherit">
+                    <i
+                        class="ph-duotone ph-projector-screen text-5xl text-yellow-500 group-hover:text-blue-500 transition"></i>
+                    <h2 class="text-2xl font-bold">Layar Proyektor</h2>
+                    <p class="text-sm text-gray-500">Tampilan Big Timer, Live Voting & Running Text.</p>
+                </a>
+
+                <a href="admin.html"
+                    class="clay-card p-6 flex flex-col items-center gap-4 hover:-translate-y-2 transition cursor-pointer group no-underline text-inherit">
+                    <i
+                        class="ph-duotone ph-shield-check text-5xl text-blue-800 group-hover:text-yellow-500 transition"></i>
+                    <h2 class="text-2xl font-bold">Dashboard Admin</h2>
+                    <p class="text-sm text-gray-500">Moderasi ketat, AI Summary & kontrol acara.</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="shared.js"></script>
+</body>
+
+</html>
