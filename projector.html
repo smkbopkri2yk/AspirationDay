@@ -935,10 +935,12 @@
             loadTimerState();
             updateTimerUI();
             if (timerRunning && timerRemaining > 0) {
+                if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
                 timerInterval = setInterval(() => {
                     timerRemaining--;
                     updateTimerUI();
-                    if (timerRemaining === 0) {
+                    if (timerRemaining <= 0) {
+                        timerRemaining = 0;
                         clearInterval(timerInterval);
                         timerInterval = null;
                         timerRunning = false;

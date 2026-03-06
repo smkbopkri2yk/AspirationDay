@@ -69,6 +69,7 @@ let timerRemaining = 180;
 let timerInterval = null;
 let timerRunning = false;
 let timerExpired = false;
+let _isSaving = false; // Prevent Firebase echo loop when this page saves timer state
 // timerMode: 'openmic' | 'debat-guru' | 'debat-siswa' | 'debat-respon'
 let timerMode = 'openmic';
 
@@ -98,6 +99,7 @@ function loadTimerState(data) {
 }
 
 function saveTimerState() {
+    _isSaving = true;
     const stateObj = {
         duration: timerDuration,
         remaining: timerRemaining,
@@ -107,6 +109,8 @@ function saveTimerState() {
     };
     localStorage.setItem('timerState', JSON.stringify(stateObj));
     fbSet('timerState', stateObj);
+    // Reset flag after short delay to let Firebase echo settle
+    setTimeout(() => { _isSaving = false; }, 500);
 }
 
 // ===== HELPERS =====
@@ -227,12 +231,15 @@ function setTimerDuration(seconds) {
 function startTimer() {
     if (!timerRunning && timerRemaining > 0) {
         timerRunning = true;
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
         saveTimerState();
         timerInterval = setInterval(() => {
             timerRemaining--;
             updateTimerUI();
-            saveTimerState();
-            if (timerRemaining === 0) {
+            // Save state every 5 seconds to reduce Firebase writes and echo loops
+            if (timerRemaining % 5 === 0) saveTimerState();
+            if (timerRemaining <= 0) {
+                timerRemaining = 0;
                 pauseTimer();
                 playBeep();
                 timerExpired = true;
@@ -398,15 +405,21 @@ function initFirebaseListeners() {
     // Timer State
     fbListen('timerState', (val) => {
         if (val) {
+            // Skip if this page just saved the state (avoid echo loop)
+            if (_isSaving) {
+                if (_firebaseInitialized && _onFirebaseUpdate) _onFirebaseUpdate('timerState');
+                return;
+            }
             loadTimerState(val);
             localStorage.setItem('timerState', JSON.stringify(val));
             // Fix double-tick: always clear existing interval before possibly starting a new one
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-            if (timerRunning) {
+            if (timerRunning && timerRemaining > 0) {
                 timerInterval = setInterval(() => {
                     timerRemaining--;
                     updateTimerUI();
-                    if (timerRemaining === 0) {
+                    if (timerRemaining <= 0) {
+                        timerRemaining = 0;
                         pauseTimer();
                         playBeep();
                     }

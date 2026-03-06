@@ -103,35 +103,12 @@ function initAdminTimer() {
     loadTimerState();
     updateTimerUI();
     updateStartButtonState();
+    // Timer interval is managed by startTimer() and Firebase listener in shared.js
+    // No duplicate interval here — just resume if timer was running
     if (timerRunning && timerRemaining > 0 && !timerInterval) {
-        timerInterval = setInterval(() => {
-            timerRemaining--;
-            updateTimerUI();
-            saveTimerState();
-            if (timerRemaining === 0) {
-                pauseTimer();
-                playBeep();
-                timerExpired = true;
-                localStorage.setItem('timerExpired', 'true');
-                updateStartButtonState();
-                showToast('Waktu habis!', 'warning');
-                // Auto-end Open Mic if active
-                if (eventMode === 'openmic') {
-                    eventMode = 'normal';
-                    saveEventMode();
-                    updateOpenMicUI();
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Sesi Selesai!',
-                        text: 'Timer habis — Open Mic Mode otomatis dinonaktifkan.',
-                        timer: 3000,
-                        showConfirmButton: false,
-                        background: '#faf5ff',
-                        iconColor: '#7c3aed'
-                    });
-                }
-            }
-        }, 1000);
+        // Re-use startTimer logic: set running=false first so startTimer() will proceed
+        timerRunning = false;
+        startTimer();
     }
 }
 
