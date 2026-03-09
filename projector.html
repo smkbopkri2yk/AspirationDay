@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layar Proyektor - AspirAction 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background: #111827;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="antialiased text-white h-screen flex flex-col">
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Dynamic Background -->
+    <div id="proj-bg"
+        class="absolute inset-0 bg-gradient-to-br from-blue-900 to-gray-900 transition-colors duration-1000 z-0"></div>
+
+    <div class="relative z-10 flex-1 p-6 md:p-8 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <a href="index.html"
+                    class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.5)] hover:scale-110 transition">
+                    <i class="ph-fill ph-microphone-stage text-2xl text-blue-900"></i>
+                </a>
+                <h1 class="text-2xl font-black tracking-widest text-white">ASPIR<span
+                        class="text-yellow-400">ACTION</span></h1>
+            </div>
+            <div
+                class="flex items-center gap-4 bg-black/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 shadow-lg">
+                <span class="font-bold text-yellow-300 text-lg uppercase tracking-wide flex items-center gap-2">
+                    <i class="ph-bold ph-device-mobile-camera"></i> SCAN UNTUK VOTE 👉
+                </span>
+                <div class="w-12 h-12 bg-white p-1 rounded-lg">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=AspirAction2.0" alt="QR"
+                        class="w-full h-full">
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-0">
+            <!-- LEFT: Timer & Speaker -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <!-- BIG TIMER -->
+                <div id="proj-timer-card"
+                    class="bg-white/10 backdrop-blur-2xl border border-white/20 p-8 rounded-[3rem] text-center shadow-2xl transition-all duration-500 flex flex-col justify-center min-h-[40%]">
+                    <h3 class="text-gray-400 font-bold tracking-widest uppercase mb-2">Sisa Waktu Orasi</h3>
+                    <div id="proj-timer-text"
+                        class="text-[7rem] xl:text-[9rem] leading-none font-black font-mono tracking-tighter text-white drop-shadow-lg transition-all duration-300">
+                        03:00</div>
+                    <!-- Progress bar -->
+                    <div class="mt-4 w-full bg-white/10 rounded-full h-3 overflow-hidden">
+                        <div id="proj-timer-progress"
+                            class="h-full bg-emerald-400 rounded-full transition-all duration-1000" style="width:100%">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speaker Info -->
+                <div
+                    class="bg-gradient-to-br from-blue-800/90 to-blue-600/90 backdrop-blur-xl border border-blue-400/40 p-8 rounded-[2.5rem] shadow-2xl flex-1 flex flex-col justify-center relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 text-[10rem] text-white/5"><i class="ph-fill ph-quotes"></i>
+                    </div>
+                    <p class="text-blue-200 font-semibold mb-2 uppercase tracking-widest text-sm z-10"><span
+                            class="w-2 h-2 inline-block bg-red-500 rounded-full animate-pulse mr-2"></span>Live Orator
+                    </p>
+                    <h2 id="proj-speaker-name"
+                        class="text-4xl xl:text-5xl font-extrabold mb-3 text-white z-10 tracking-tight">Menunggu
+                        Siswa...</h2>
+                    <div class="flex items-center gap-2 mb-6 z-10">
+                        <span class="bg-yellow-400 text-yellow-950 px-4 py-1 rounded-full text-sm font-bold shadow-md"
+                            id="proj-speaker-major">-</span>
+                    </div>
+                    <div class="bg-black/30 p-5 rounded-2xl border border-white/10 z-10 backdrop-blur-sm">
+                        <p class="text-sm text-gray-400 mb-1 font-semibold uppercase tracking-wider">Topik Bahasan:</p>
+                        <p id="proj-speaker-topic" class="text-xl xl:text-2xl font-bold text-white leading-snug">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Live Aspiration & Voting -->
+            <div class="lg:col-span-7 flex flex-col h-full min-h-0">
+                <div
+                    class="flex-1 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[3rem] p-8 xl:p-10 flex flex-col relative overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.3)] h-full">
+                    <!-- Header Live -->
+                    <div class="flex items-center justify-between mb-8 z-10">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-4 h-4 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]"></span>
+                            <h3 class="text-2xl font-extrabold text-white tracking-wide uppercase">Live Aspirasi Forum
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div id="proj-aspiration-display"
+                        class="flex-1 flex flex-col justify-center items-center text-center z-10 transition-all duration-500 px-4">
+                        <div
+                            class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+                            <i class="ph-duotone ph-chat-circle-dots text-5xl text-gray-400"></i>
+                        </div>
+                        <p class="text-2xl text-gray-300 font-bold mb-2">Menunggu Sorotan Admin</p>
+                        <p class="text-gray-400">Aspirasi terpilih akan ditampilkan besar di sini untuk dibahas.</p>
+                    </div>
+
+                    <!-- Live Voting Chart -->
+                    <div id="proj-voting-section"
+                        class="hidden w-full mt-6 pt-6 border-t border-white/10 flex flex-col z-10 bg-black/20 p-6 rounded-3xl">
+                        <h4
+                            class="text-lg font-bold text-yellow-400 mb-4 text-center tracking-widest uppercase text-sm">
+                            Hasil Voting Real-Time Siswa</h4>
+                        <div class="h-40 w-full relative"><canvas id="votingChart"></canvas></div>
+                    </div>
+
+                    <!-- Decor -->
+                    <div
+                        class="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none">
+                    </div>
+                    <div
+                        class="absolute -bottom-32 -left-32 w-96 h-96 bg-yellow-500/20 rounded-full blur-[80px] pointer-events-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WAKTU HABIS Overlay -->
+    <div id="timer-expired-overlay"
+        class="hidden fixed inset-0 z-[999] flex flex-col items-center justify-center pointer-events-none">
+        <div class="absolute inset-0 bg-red-900/70 backdrop-blur-sm animate-pulse"></div>
+        <div class="relative z-10 text-center">
+            <p
+                class="text-[8rem] font-black text-white drop-shadow-[0_0_40px_rgba(239,68,68,1)] leading-none tracking-tighter animate-bounce">
+                WAKTU</p>
+            <p
+                class="text-[8rem] font-black text-red-300 drop-shadow-[0_0_40px_rgba(239,68,68,1)] leading-none tracking-tighter -mt-4">
+                HABIS!</p>
+        </div>
+    </div>
+
+    <!-- NEWS TICKER -->
+    <div class="h-14 relative z-20 flex items-center ticker-wrap">
+        <div
+            class="bg-red-600 text-white font-black px-6 h-full flex items-center absolute left-0 z-30 shadow-[10px_0_20px_rgba(0,0,0,0.5)] tracking-wider">
+            <i class="ph-fill ph-broadcast mr-2 animate-pulse"></i> LIVE FEED
+        </div>
+        <div class="ticker" id="proj-ticker-content">
+            <div class="ticker-item">Menunggu aspirasi masuk dari portal siswa...</div>
+        </div>
+    </div>
+
+    <!-- SURVEY MODE (FULLSCREEN LAYOUT) -->
+    <div id="survey-panel"
+        class="hidden absolute inset-0 z-40 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex flex-col">
+        <!-- Content added dynamically by JS -->
+    </div>
+
+    <!-- OPEN MIC 2 OVERLAY (Fullscreen) -->
+    <div id="openmic2-panel"
+        class="hidden absolute inset-0 z-40 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#0f172a] flex flex-col">
+        <!-- Background Decoration -->
+        <div class="absolute inset-0 z-0 opacity-10"
+            style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
+        <div class="absolute inset-0 z-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+
+        <div class="relative z-10 flex-1 flex flex-col p-12 h-full">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-10">
+                <img src="https://raw.githubusercontent.com/rra-labs/aspiration-assets/refs/heads/main/logo.png"
+                    alt="Aspiration Day" class="h-14 drop-shadow-lg">
+                <div
+                    class="flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/20 px-5 py-2.5 rounded-2xl shadow-xl">
+                    <span
+                        class="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]"></span>
+                    <span class="text-white font-black tracking-widest text-lg">OPEN MIC 2 <span
+                            class="text-blue-400 font-bold opacity-80 select-none">LIVE</span></span>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div id="om2-active-content" class="flex-1 flex flex-col justify-center max-w-6xl mx-auto w-full">
+                <!-- Javascript injects active issue here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="shared.js"></script>
+
+    <!-- Timer Expired Overlay -->
+    <div id="timer-expired-overlay" class="fixed inset-0 z-[200] items-center justify-center cursor-pointer"
+        style="display:none; background: radial-gradient(ellipse at center, rgba(127,29,29,0.95) 0%, rgba(17,24,39,0.98) 80%); opacity:1; transition: opacity 0.6s ease;"
+        onclick="hideTimerExpiredOverlay()">
+        <div class="text-center animate-pulse">
+            <div
+                class="w-32 h-32 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-8 border-4 border-red-400/50 shadow-[0_0_60px_rgba(239,68,68,0.5)]">
+                <i class="ph-fill ph-timer text-7xl text-red-400"></i>
+            </div>
+            <h2 class="text-5xl xl:text-7xl font-black text-white mb-4 tracking-tight"
+                style="text-shadow: 0 0 40px rgba(239,68,68,0.6);">WAKTU HABIS</h2>
+            <div class="w-32 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent mx-auto mb-6"></div>
+            <p class="text-2xl xl:text-3xl text-red-200/80 font-semibold">Terima Kasih 🙏</p>
+            <p class="text-sm text-red-300/50 mt-6">Klik untuk menutup</p>
+        </div>
+    </div>
+    <script>
+        let chartInstance = null;
+        let activeLiveAspirationId = null;
+
+        // --- CHART ---
+        function initChart() {
+            if (chartInstance) return;
+            const ctx = document.getElementById('votingChart').getContext('2d');
+            Chart.defaults.color = '#cbd5e1';
+            Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Setuju & Prioritas', 'Tidak Prioritas'],
+                    datasets: [{ data: [0, 0], backgroundColor: ['rgba(34, 197, 94, 0.9)', 'rgba(239, 68, 68, 0.9)'], borderColor: ['rgb(22, 163, 74)', 'rgb(220, 38, 38)'], borderWidth: 2, borderRadius: 8, barThickness: 30 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.9)', titleFont: { size: 14 }, bodyFont: { size: 16, weight: 'bold' }, padding: 10 } },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 1, color: 'white', font: { weight: 'bold' } } },
+                        y: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 14 }, color: 'white' } }
+                    },
+                    animation: { duration: 800, easing: 'easeOutBounce' }
+                }
+            });
+        }
+
+        function updateChartData(id) {
+            if (!chartInstance || !id) return;
+            const asp = aspirations.find(a => a.id === id);
+            if (asp) { chartInstance.data.datasets[0].data = [asp.upvotes, asp.downvotes]; chartInstance.update(); }
+        }
+
+        // --- PROJECTOR DISPLAY ---
+        function updateProjectorDisplay() {
+            const container = document.getElementById('proj-aspiration-display');
+            const votingSection = document.getElementById('proj-voting-section');
+            const activeAsp = aspirations.find(a => a.status === 'shown');
+
+            activeLiveAspirationId = activeAsp ? activeAsp.id : null;
+
+            // Update speaker info from localStorage
+            const spName = document.getElementById('proj-speaker-name');
+            if (spName) {
+                spName.innerText = currentSpeaker.name || 'Menunggu Siswa...';
+                spName.classList.remove('text-white');
+                spName.classList.add('text-green-300');
+                setTimeout(() => {
+                    spName.classList.remove('text-green-300');
+                    spName.classList.add('text-white');
+                }, 500);
+            }
+
+            const spMajor = document.getElementById('proj-speaker-major');
+            if (spMajor) spMajor.innerText = currentSpeaker.major || '-';
+
+            const spTopic = document.getElementById('proj-speaker-topic');
+            if (spTopic) spTopic.innerText = currentSpeaker.topic || '-';
+
+            if (!container || !votingSection) return;
+
+            if (!activeAsp) {
+                container.innerHTML = `
+                    <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10"><i class="ph-duotone ph-chat-circle-dots text-5xl text-gray-400"></i></div>
+                    <p class="text-2xl text-gray-300 font-bold mb-2">Menunggu Sorotan Admin</p>
+                    <p class="text-gray-400">Aspirasi terpilih akan ditampilkan besar di sini untuk dibahas.</p>`;
+                votingSection.classList.add('hidden');
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="fade-in bg-gradient-to-br from-white/95 to-blue-50/95 text-blue-900 p-8 xl:p-12 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full border-l-8 border-l-yellow-400 relative text-left">
+                    <div class="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-lg font-bold text-sm mb-6 border border-blue-200">${catIcons[activeAsp.category]} Topik: ${escapeHTML(activeAsp.category)}</div>
+                    <p class="text-3xl xl:text-4xl font-extrabold leading-tight mb-8 text-gray-800">"${escapeHTML(activeAsp.text)}"</p>
+                    <div class="flex items-center justify-between border-t border-gray-200 pt-4">
+                        <p class="text-sm text-gray-500 font-semibold flex items-center gap-2"><i class="ph-fill ph-mask-happy text-yellow-500 text-xl"></i> Dikirim Anonim • ${activeAsp.time}</p>
+                    </div>
+                </div>`;
+            votingSection.classList.remove('hidden');
+            votingSection.classList.add('flex');
+            updateChartData(activeLiveAspirationId);
+        }
+
+        // --- HELPER: Restore normal grid layout ---
+        function restoreNormalGrid() {
+            const mainGrid = document.querySelector('.flex-1.grid');
+            const tickerWrap = document.querySelector('.ticker-wrap');
+            const projBg = document.getElementById('proj-bg');
+
+            if (tickerWrap) tickerWrap.style.display = '';
+            if (projBg) projBg.className = "absolute inset-0 bg-gradient-to-br from-blue-900 to-gray-900 transition-colors duration-1000 z-0";
+
+            // Restore the full 12-col grid if it was destroyed by debate or openmic
+            if (mainGrid && !document.querySelector('.lg\\:col-span-5')) {
+                const spk = JSON.parse(localStorage.getItem('currentSpeaker')) || currentSpeaker || { name: 'Menunggu Siswa...', major: '-', topic: '-' };
+                mainGrid.className = "flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-0";
+                mainGrid.innerHTML = `
+                    <!-- LEFT: Timer & Speaker -->
+                    <div class="lg:col-span-5 flex flex-col gap-6">
+                        <div id="proj-timer-card" class="bg-white/10 backdrop-blur-2xl border border-white/20 p-8 rounded-[3rem] text-center shadow-2xl transition-all duration-500 flex flex-col justify-center min-h-[40%]">
+                            <h3 class="text-gray-400 font-bold tracking-widest uppercase mb-2">Sisa Waktu Orasi</h3>
+                            <div id="proj-timer-text" class="text-[7rem] xl:text-[9rem] leading-none font-black font-mono tracking-tighter text-white drop-shadow-lg transition-all duration-300">${formatTime(timerRemaining)}</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-800/90 to-blue-600/90 backdrop-blur-xl border border-blue-400/40 p-8 rounded-[2.5rem] shadow-2xl flex-1 flex flex-col justify-center relative overflow-hidden">
+                            <div class="absolute -right-10 -top-10 text-[10rem] text-white/5"><i class="ph-fill ph-quotes"></i></div>
+                            <p class="text-blue-200 font-semibold mb-2 uppercase tracking-widest text-sm z-10"><span class="w-2 h-2 inline-block bg-red-500 rounded-full animate-pulse mr-2"></span>Live Orator</p>
+                            <h2 id="proj-speaker-name" class="text-4xl xl:text-5xl font-extrabold mb-3 text-white z-10 tracking-tight">${escapeHTML(spk.name || 'Menunggu Siswa...')}</h2>
+                            <div class="flex items-center gap-2 mb-6 z-10">
+                                <span class="bg-yellow-400 text-yellow-950 px-4 py-1 rounded-full text-sm font-bold shadow-md" id="proj-speaker-major">${escapeHTML(spk.major || '-')}</span>
+                            </div>
+                            <div class="bg-black/30 p-5 rounded-2xl border border-white/10 z-10 backdrop-blur-sm">
+                                <p class="text-sm text-gray-400 mb-1 font-semibold uppercase tracking-wider">Topik Bahasan:</p>
+                                <p id="proj-speaker-topic" class="text-xl xl:text-2xl font-bold text-white leading-snug">${escapeHTML(spk.topic || '-')}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- RIGHT: Live Aspiration & Voting -->
+                    <div class="lg:col-span-7 flex flex-col h-full min-h-0">
+                        <div class="flex-1 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[3rem] p-8 xl:p-10 flex flex-col relative overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.3)] h-full">
+                            <div class="flex items-center justify-between mb-8 z-10">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-4 h-4 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]"></span>
+                                    <h3 class="text-2xl font-extrabold text-white tracking-wide uppercase">Live Aspirasi Forum</h3>
+                                </div>
+                            </div>
+                            <div id="proj-aspiration-display" class="flex-1 flex flex-col justify-center items-center text-center z-10 transition-all duration-500 px-4">
+                                <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+                                    <i class="ph-duotone ph-chat-circle-dots text-5xl text-gray-400"></i>
+                                </div>
+                                <p class="text-2xl text-gray-300 font-bold mb-2">Menunggu Sorotan Admin</p>
+                                <p class="text-gray-400">Aspirasi terpilih akan ditampilkan besar di sini untuk dibahas.</p>
+                            </div>
+                            <div id="proj-voting-section" class="hidden w-full mt-6 pt-6 border-t border-white/10 flex flex-col z-10 bg-black/20 p-6 rounded-3xl">
+                                <h4 class="text-lg font-bold text-yellow-400 mb-4 text-center tracking-widest uppercase text-sm">Hasil Voting Real-Time Siswa</h4>
+                                <div class="h-40 w-full relative"><canvas id="votingChart"></canvas></div>
+                            </div>
+                            <div class="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                            <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-yellow-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                        </div>
+                    </div>`;
+                chartInstance = null;
+                initChart();
+            } else {
+                // Grid structure is intact but aspiration panel content might be overwritten (from openmic)
+                const aspirationPanel = document.querySelector('.lg\\:col-span-7');
+                if (aspirationPanel && !document.getElementById('proj-aspiration-display')) {
+                    aspirationPanel.innerHTML = `
+                        <div class="flex-1 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[3rem] p-8 xl:p-10 flex flex-col relative overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.3)] h-full">
+                            <div class="flex items-center justify-between mb-8 z-10">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-4 h-4 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]"></span>
+                                    <h3 class="text-2xl font-extrabold text-white tracking-wide uppercase">Live Aspirasi Forum</h3>
+                                </div>
+                            </div>
+                            <div id="proj-aspiration-display" class="flex-1 flex flex-col justify-center items-center text-center z-10 transition-all duration-500 px-4">
+                                <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+                                    <i class="ph-duotone ph-chat-circle-dots text-5xl text-gray-400"></i>
+                                </div>
+                                <p class="text-2xl text-gray-300 font-bold mb-2">Menunggu Sorotan Admin</p>
+                                <p class="text-gray-400">Aspirasi terpilih akan ditampilkan besar di sini untuk dibahas.</p>
+                            </div>
+                            <div id="proj-voting-section" class="hidden w-full mt-6 pt-6 border-t border-white/10 flex flex-col z-10 bg-black/20 p-6 rounded-3xl">
+                                <h4 class="text-lg font-bold text-yellow-400 mb-4 text-center tracking-widest uppercase text-sm">Hasil Voting Real-Time Siswa</h4>
+                                <div class="h-40 w-full relative"><canvas id="votingChart"></canvas></div>
+                            </div>
+                            <div class="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                            <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-yellow-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                        </div>`;
+                    chartInstance = null;
+                    initChart();
+                }
+            }
+        }
+
+        // ===== OPEN MIC PANEL with toggle =====
+        // Read initial toggle state from localStorage (so admin can control remotely)
+        let projectorRightView = localStorage.getItem('projectorRightView') || 'openmic';
+        let debateProjectorView = localStorage.getItem('debateProjectorView') || 'debate';
+
+        function toggleOpenMicView() {
+            projectorRightView = projectorRightView === 'openmic' ? 'aspirasi' : 'openmic';
+            localStorage.setItem('projectorRightView', projectorRightView);
+            fbSet('projectorRightView', projectorRightView);
+            renderOpenMicPanel();
+        }
+
+        function renderOpenMicPanel() {
+            const aspirationPanel = document.querySelector('.lg\\:col-span-7');
+            if (!aspirationPanel) return;
+            if (projectorRightView === 'openmic') {
+                const om = openMicData;
+                const hasBullets = om.bullet1 || om.bullet2 || om.bullet3;
+                aspirationPanel.innerHTML = `
+                    <div class="flex-1 bg-purple-900/30 backdrop-blur-2xl border border-purple-400/30 rounded-[3rem] p-8 xl:p-10 flex flex-col relative overflow-hidden shadow-[0_0_60px_rgba(139,92,246,0.3)] h-full">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-500/10"></div>
+                        <button onclick="toggleOpenMicView()" title="Tampilkan Live Aspirasi"
+                            class="absolute top-5 right-5 z-30 flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur px-3 py-1.5 rounded-full text-white text-xs font-bold transition">
+                            <i class="ph-bold ph-arrows-left-right"></i> Live Aspirasi
+                        </button>
+                        <div class="relative z-10 text-center w-full max-w-lg mx-auto flex-1 flex flex-col items-center justify-center">
+                            <div class="w-24 h-24 rounded-full bg-purple-500/20 flex items-center justify-center mb-5 mx-auto border-2 border-purple-400/40 shadow-[0_0_40px_rgba(139,92,246,0.4)]">
+                                <i class="ph-fill ph-microphone-stage text-5xl text-purple-300 animate-pulse"></i>
+                            </div>
+                            <div class="inline-flex items-center gap-2 px-5 py-2 bg-purple-600 rounded-full text-white font-black text-sm tracking-widest mb-4 shadow-lg">
+                                <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span> OPEN MIC MODE
+                            </div>
+                            <h3 class="text-3xl xl:text-4xl font-extrabold text-white mb-3 tracking-tight">Sesi Orasi Berlangsung</h3>
+                            ${hasBullets ? `
+                            <div class="mt-5 bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 text-left w-full">
+                                ${om.label ? `<p class="text-purple-200 font-black text-lg uppercase tracking-widest mb-4">${escapeHTML(om.label)}</p>` : ''}
+                                <ul class="space-y-3">
+                                    ${om.bullet1 ? `<li class="flex items-start gap-3 text-white text-xl xl:text-2xl font-bold"><span class="text-purple-300 text-2xl mt-0.5">•</span>${escapeHTML(om.bullet1)}</li>` : ''}
+                                    ${om.bullet2 ? `<li class="flex items-start gap-3 text-white text-xl xl:text-2xl font-bold"><span class="text-purple-300 text-2xl mt-0.5">•</span>${escapeHTML(om.bullet2)}</li>` : ''}
+                                    ${om.bullet3 ? `<li class="flex items-start gap-3 text-white text-xl xl:text-2xl font-bold"><span class="text-purple-300 text-2xl mt-0.5">•</span>${escapeHTML(om.bullet3)}</li>` : ''}
+                                </ul>
+                            </div>` : '<p class="text-purple-200/80 text-lg mt-2">Mohon perhatian ke pembicara di podium</p>'}
+                        </div>
+                        <div class="absolute -top-32 -right-32 w-96 h-96 bg-purple-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                        <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                    </div>`;
+            } else {
+                aspirationPanel.innerHTML = `
+                    <div class="flex-1 bg-white/10 backdrop-blur-2xl border border-purple-300/30 rounded-[3rem] p-8 xl:p-10 flex flex-col relative overflow-hidden shadow-[0_0_40px_rgba(139,92,246,0.3)] h-full">
+                        <button onclick="toggleOpenMicView()" title="Kembali ke Open Mic"
+                            class="absolute top-5 right-5 z-30 flex items-center gap-2 bg-purple-600/80 hover:bg-purple-600 border border-purple-400/40 backdrop-blur px-3 py-1.5 rounded-full text-white text-xs font-bold transition">
+                            <i class="ph-bold ph-arrows-left-right"></i> Open Mic
+                        </button>
+                        <div class="flex items-center gap-3 mb-6 z-10">
+                            <span class="w-4 h-4 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]"></span>
+                            <h3 class="text-2xl font-extrabold text-white tracking-wide uppercase">Live Aspirasi Forum</h3>
+                        </div>
+                        <div id="proj-aspiration-display" class="flex-1 flex flex-col justify-center items-center text-center z-10 transition-all duration-500 px-4">
+                            <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+                                <i class="ph-duotone ph-chat-circle-dots text-5xl text-gray-400"></i>
+                            </div>
+                            <p class="text-2xl text-gray-300 font-bold mb-2">Menunggu Sorotan Admin</p>
+                            <p class="text-gray-400">Aspirasi terpilih akan ditampilkan besar di sini untuk dibahas.</p>
+                        </div>
+                        <div id="proj-voting-section" class="hidden w-full mt-6 pt-6 border-t border-white/10 flex flex-col z-10 bg-black/20 p-6 rounded-3xl">
+                            <h4 class="text-lg font-bold text-yellow-400 mb-4 text-center tracking-widest uppercase text-sm">Hasil Voting Real-Time Siswa</h4>
+                            <div class="h-40 w-full relative"><canvas id="votingChart"></canvas></div>
+                        </div>
+                        <div class="absolute -top-32 -right-32 w-96 h-96 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+                        <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+                    </div>`;
+                chartInstance = null;
+                initChart();
+                updateProjectorDisplay();
+            }
+        }
+
+        function toggleDebateView() {
+            debateProjectorView = debateProjectorView === 'debate' ? 'aspirasi' : 'debate';
+            localStorage.setItem('debateProjectorView', debateProjectorView);
+            fbSet('debateProjectorView', debateProjectorView);
+            if (debateProjectorView === 'aspirasi') {
+                // Replace 3-col grid with full aspirasi panel
+                const mainGrid = document.querySelector('.flex-1.grid');
+                if (!mainGrid) return;
+                mainGrid.className = 'flex-1 grid grid-cols-1 h-full min-h-0';
+                mainGrid.innerHTML = `
+                    <div class="flex-1 bg-white/10 backdrop-blur-2xl border border-orange-300/30 rounded-[3rem] p-8 xl:p-10 flex flex-col relative overflow-hidden shadow-[0_0_40px_rgba(249,115,22,0.3)] h-full">
+                        <!-- Toggle back -->
+                        <button onclick="toggleDebateView()" title="Kembali ke Debate"
+                            class="absolute top-5 right-5 z-30 flex items-center gap-2 bg-orange-600/80 hover:bg-orange-600 border border-orange-400/40 backdrop-blur px-3 py-1.5 rounded-full text-white text-xs font-bold transition">
+                            <i class="ph-bold ph-arrows-left-right"></i> Debate
+                        </button>
+                        <div class="flex items-center gap-3 mb-6 z-10">
+                            <span class="w-4 h-4 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]"></span>
+                            <h3 class="text-2xl font-extrabold text-white tracking-wide uppercase">Live Aspirasi Forum</h3>
+                        </div>
+                        <div id="proj-aspiration-display" class="flex-1 flex flex-col justify-center items-center text-center z-10 transition-all duration-500 px-4">
+                            <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+                                <i class="ph-duotone ph-chat-circle-dots text-5xl text-gray-400"></i>
+                            </div>
+                            <p class="text-2xl text-gray-300 font-bold mb-2">Menunggu Sorotan Admin</p>
+                            <p class="text-gray-400">Aspirasi terpilih akan ditampilkan besar di sini untuk dibahas.</p>
+                        </div>
+                        <div id="proj-voting-section" class="hidden w-full mt-6 pt-6 border-t border-white/10 flex flex-col z-10 bg-black/20 p-6 rounded-3xl">
+                            <h4 class="text-lg font-bold text-yellow-400 mb-4 text-center tracking-widest uppercase text-sm">Hasil Voting Real-Time Siswa</h4>
+                            <div class="h-40 w-full relative"><canvas id="votingChart"></canvas></div>
+                        </div>
+                        <div class="absolute -top-32 -right-32 w-96 h-96 bg-orange-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+                        <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-yellow-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+                    </div>`;
+                chartInstance = null;
+                initChart();
+                updateProjectorDisplay();
+            } else {
+                // Restore full debate layout
+                debateProjectorView = 'debate';
+                applyProjectorMode();
+            }
+        }
+
+        // --- RENDER OPEN MIC 2 PANEL (NORMAL MODE) ---
+        function renderOpenMic2Panel() {
+            const container = document.getElementById('om2-active-content');
+            if (!container) return;
+            if (!openMic2Data || openMic2Data.activeIndex === -1) {
+                container.innerHTML = `
+                    <div class="text-center">
+                        <i class="ph-duotone ph-projector-screen text-9xl text-white/20 mb-6 drop-shadow-lg"></i>
+                        <h2 class="text-4xl font-extrabold text-white/50 tracking-tight">Menunggu Isu Pembahasan...</h2>
+                    </div>`;
+                return;
+            }
+
+            const idx = openMic2Data.activeIndex;
+            const issue = openMic2Data.issues[idx];
+
+            // Calculate percentages 
+            const total = (issue.setuju || 0) + (issue.tidakSetuju || 0);
+            const pctSetuju = total > 0 ? Math.round(((issue.setuju || 0) / total) * 100) : 0;
+            const pctTidak = total > 0 ? Math.round(((issue.tidakSetuju || 0) / total) * 100) : 0;
+
+            container.innerHTML = `
+                <div class="bg-white/10 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-12 lg:p-16 shadow-[0_20px_60px_rgba(0,0,0,0.5)] fade-in w-full text-center relative overflow-hidden">
+                    <div class="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                    <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-purple-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                    
+                    <div class="relative z-10 flex flex-col items-center justify-center">
+                        <div class="w-20 h-20 rounded-full bg-blue-600 font-black text-white text-3xl flex items-center justify-center mb-8 shadow-lg shadow-blue-500/30 ring-4 ring-blue-400/20">
+                            #${idx + 1}
+                        </div>
+                        <h2 class="text-4xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-16 max-w-4xl mx-auto" style="text-wrap: balance;">
+                            "${escapeHTML(issue.label || 'Isu belum diberi label')}"
+                        </h2>
+                        
+                        <div class="grid grid-cols-2 gap-8 w-full max-w-3xl mx-auto">
+                            <!-- Setuju Card -->
+                            <div class="bg-gradient-to-br from-green-500/20 to-green-600/10 border-2 border-green-400/30 rounded-3xl p-8 transform hover:scale-105 transition-all">
+                                <div class="text-green-400 mb-2"><i class="ph-fill ph-thumbs-up text-6xl drop-shadow-lg"></i></div>
+                                <div class="text-green-300 font-bold uppercase tracking-widest text-sm mb-4">Setuju & Prioritas</div>
+                                <div class="text-7xl font-black text-white drop-shadow-md mb-2 font-mono">${issue.setuju || 0}</div>
+                                <div class="text-green-200/60 font-medium">${pctSetuju}% Suara</div>
+                            </div>
+                            
+                            <!-- Tidak Setuju Card -->
+                            <div class="bg-gradient-to-br from-red-500/20 to-red-600/10 border-2 border-red-400/30 rounded-3xl p-8 transform hover:scale-105 transition-all">
+                                <div class="text-red-400 mb-2"><i class="ph-fill ph-thumbs-down text-6xl drop-shadow-lg"></i></div>
+                                <div class="text-red-300 font-bold uppercase tracking-widest text-sm mb-4">Kurang Setuju</div>
+                                <div class="text-7xl font-black text-white drop-shadow-md mb-2 font-mono">${issue.tidakSetuju || 0}</div>
+                                <div class="text-red-200/60 font-medium">${pctTidak}% Suara</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- RENDER DEBATE AUDIENCE PANEL (helper for debate center column) ---
+        function renderDebateAudiencePanel() {
+            var dr = debateResponses || { setuju: 0, tidakSetuju: 0, comments: [] };
+            var totalV = (dr.setuju || 0) + (dr.tidakSetuju || 0);
+            var pS = totalV > 0 ? Math.round(((dr.setuju || 0) / totalV) * 100) : 50;
+            var pT = totalV > 0 ? 100 - pS : 50;
+            var latestComments = (dr.comments || []).slice(-5).reverse();
+
+            var html = '<div class="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-5 xl:p-6 relative overflow-hidden">';
+            html += '<p class="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-2">';
+            html += '<i class="ph-fill ph-users-three text-orange-400"></i> Respons Audiens';
+            html += '<span class="ml-auto text-white/30">' + totalV + ' vote</span></p>';
+
+            // Vote Bar
+            html += '<div class="flex items-center gap-3 mb-4">';
+            html += '<div class="flex items-center gap-1.5"><i class="ph-fill ph-thumbs-up text-green-400 text-lg"></i>';
+            html += '<span class="text-green-400 font-black text-xl">' + (dr.setuju || 0) + '</span></div>';
+            html += '<div class="flex-1 h-4 bg-white/10 rounded-full overflow-hidden flex">';
+            html += '<div class="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-l-full transition-all duration-700" style="width:' + pS + '%"></div>';
+            html += '<div class="h-full bg-gradient-to-r from-red-400 to-red-500 rounded-r-full transition-all duration-700" style="width:' + pT + '%"></div>';
+            html += '</div>';
+            html += '<div class="flex items-center gap-1.5"><span class="text-red-400 font-black text-xl">' + (dr.tidakSetuju || 0) + '</span>';
+            html += '<i class="ph-fill ph-thumbs-down text-red-400 text-lg"></i></div></div>';
+
+            // Latest Comments
+            if (latestComments.length > 0) {
+                html += '<div class="space-y-1.5 max-h-[140px] overflow-y-auto" style="-webkit-overflow-scrolling:touch;">';
+                latestComments.forEach(function (c) {
+                    html += '<div class="flex items-start gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/5">';
+                    html += '<div class="w-5 h-5 rounded-full bg-orange-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">';
+                    html += '<i class="ph-fill ph-user text-orange-300 text-[9px]"></i></div>';
+                    html += '<p class="text-white/80 text-sm leading-snug flex-1">' + escapeHTML(c.text) + '</p>';
+                    html += '<span class="text-white/25 text-[10px] shrink-0 mt-0.5">' + escapeHTML(c.time || '') + '</span>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            } else {
+                html += '<p class="text-white/20 text-xs text-center italic">Siswa bisa mengirim tanggapan lewat Portal Siswa</p>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        // --- APPLY EVENT MODE ON PROJECTOR ---
+        function applyProjectorMode() {
+            const mainGrid = document.querySelector('.flex-1.grid');
+            const tickerWrap = document.querySelector('.ticker-wrap');
+            const projBg = document.getElementById('proj-bg');
+            const surveyPanel = document.getElementById('survey-panel');
+            const om2Panel = document.getElementById('openmic2-panel');
+
+            // Hide exclusive panels by default
+            surveyPanel.classList.add('hidden');
+            om2Panel.classList.add('hidden');
+            if (mainGrid) mainGrid.classList.add('hidden'); // default hide normal grid
+
+            if (eventMode === 'normal') {
+                om2Panel.classList.remove('hidden');
+                document.body.classList.add('bg-gray-900');
+                if (openMic2Data && openMic2Data.activeIndex !== -1) {
+                    renderOpenMic2Panel();
+                } else {
+                    document.getElementById('om2-active-content').innerHTML = `
+                        <div class="text-center">
+                            <i class="ph-duotone ph-projector-screen text-9xl text-white/20 mb-6 drop-shadow-lg"></i>
+                            <h2 class="text-4xl font-extrabold text-white/50 tracking-tight">Menunggu Isu Pembahasan...</h2>
+                        </div>
+                    `;
+                }
+
+                if (tickerWrap) tickerWrap.style.display = 'none';
+                if (projBg) projBg.className = "absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#0f172a] transition-colors duration-1000 z-0";
+
+            } else if (eventMode === 'openmic') {
+
+                restoreNormalGrid();
+                const mainGridNode3 = document.querySelector('.flex-1.grid');
+                if (mainGridNode3) mainGridNode3.classList.remove('hidden');
+
+                renderOpenMicPanel();
+                if (tickerWrap) tickerWrap.style.display = 'none';
+                if (projBg) projBg.className = "absolute inset-0 bg-gradient-to-br from-purple-950 via-gray-900 to-indigo-950 transition-colors duration-1000 z-0";
+
+            } else if (eventMode === 'debat') {
+                // DEBATE MODE — replace with 3-column layout directly
+                const mainGridNode = document.querySelector('.flex-1.grid');
+                if (mainGridNode) mainGridNode.classList.remove('hidden');
+                const dd = debateData;
+                if (mainGridNode) {
+                    mainGridNode.className = "flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 h-full min-h-0";
+
+                    // Helper: render one side's panelist list
+                    function panelistHTML(list, side) {
+                        const color = side === 'guru' ? 'blue' : 'emerald';
+                        const active = dd.activeSpeaker || { side: '', index: -1 };
+                        // Preserve original index through filter
+                        const filled = (list || []).map((p, i) => ({ ...p, _i: i })).filter(p => p.name.trim());
+                        if (!filled.length) return `<p class="text-${color}-300/60 text-sm italic">Belum ada panelis</p>`;
+                        return filled.map(p => {
+                            const isSpeaking = active.side === side && active.index === p._i;
+                            const speakRing = isSpeaking
+                                ? `ring-2 ring-${color}-300 bg-${color}-900/60 shadow-[0_0_24px_rgba(255,255,255,0.2)]`
+                                : 'bg-white/5';
+                            const micDot = isSpeaking
+                                ? `<span class="w-8 h-8 rounded-full bg-${color}-400 flex items-center justify-center animate-pulse flex-shrink-0 shadow-[0_0_12px_currentColor]"><i class="ph-fill ph-microphone text-sm text-white"></i></span>`
+                                : `<span class="w-6 h-6 rounded-full border border-${color}-400/40 flex items-center justify-center flex-shrink-0"><span class="w-2 h-2 rounded-full bg-${color}-400/50"></span></span>`;
+                            return `<div class="flex items-center gap-3 px-3 py-2 rounded-xl ${speakRing} transition-all duration-300">
+                                ${micDot}
+                                <div>
+                                    <p class="font-bold text-white ${isSpeaking ? 'text-xl' : 'text-lg'} leading-tight transition-all">${escapeHTML(p.name)}</p>
+                                    ${p.title ? `<p class="text-${color}-200/70 text-sm">${escapeHTML(p.title)}</p>` : ''}
+                                </div>
+                            </div>`;
+                        }).join('');
+                    }
+
+                    // Helper: render answer points
+                    function pointsHTML(text, color) {
+                        if (!text || !text.trim()) return '';
+                        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                        return `<div class="mt-4 pt-4 border-t border-${color}-400/20">
+                            <p class="text-${color}-300/70 text-xs font-bold uppercase tracking-widest mb-2">💡 Poin Jawaban</p>
+                            <ul class="space-y-1 text-left">
+                                ${lines.map(l => `<li class="text-${color}-100 text-sm leading-snug flex gap-2"><span class="mt-0.5 text-${color}-400">•</span><span>${escapeHTML(l)}</span></li>`).join('')}
+                            </ul>
+                        </div>`;
+                    }
+
+                    mainGridNode.innerHTML = `
+                        <!-- LEFT: Guru Panel -->
+                        <div class="flex flex-col h-full">
+                            <div class="flex-1 bg-blue-900/40 backdrop-blur-2xl border ${(dd.activeSpeaker?.side === 'guru') ? 'border-blue-300/70 shadow-[0_0_60px_rgba(59,130,246,0.6)]' : 'border-blue-400/30 shadow-[0_0_40px_rgba(59,130,246,0.3)]'} rounded-[2.5rem] p-6 xl:p-8 flex flex-col relative overflow-hidden transition-all duration-500">
+                                <div class="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-cyan-500/10"></div>
+                                <div class="relative z-10 flex flex-col h-full">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600 rounded-full text-white font-black text-xs tracking-widest shadow-lg uppercase">
+                                            <i class="ph-fill ph-chalkboard-teacher"></i> Panel Guru
+                                        </div>
+                                        <div class="bg-white/10 rounded-2xl px-4 py-2 text-center border border-blue-300/20">
+                                            <p class="text-blue-300/70 text-[10px] font-bold uppercase tracking-widest">Skor</p>
+                                            <p class="text-3xl font-black text-white leading-none">${dd.guruScore ?? 0}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-2 flex-1 overflow-y-auto">
+                                        ${panelistHTML(dd.guruList, 'guru')}
+                                    </div>
+                                    ${pointsHTML(dd.guruPoints, 'blue')}
+                                </div>
+                                <div class="absolute -top-20 -right-20 w-64 h-64 bg-blue-500/15 rounded-full blur-[60px] pointer-events-none"></div>
+                                <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-500/15 rounded-full blur-[60px] pointer-events-none"></div>
+                            </div>
+                        </div>
+
+                        <!-- CENTER: Moderator Question + Timer + Audience Engagement -->
+                        <div class="flex flex-col h-full gap-4">
+                            <div class="flex-1 bg-orange-900/30 backdrop-blur-2xl border border-orange-400/30 rounded-[2.5rem] p-6 xl:p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-[0_0_40px_rgba(249,115,22,0.3)]">
+                                <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-yellow-500/10"></div>
+                                <!-- Toggle to Live Aspirasi -->
+                                <button onclick="toggleDebateView()" title="Tampilkan Live Aspirasi"
+                                    class="absolute top-4 right-4 z-30 flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur px-3 py-1.5 rounded-full text-white text-xs font-bold transition">
+                                    <i class="ph-bold ph-arrows-left-right"></i> Live Aspirasi
+                                </button>
+                                <div class="relative z-10 text-center w-full">
+                                    <div class="inline-flex items-center gap-2 px-5 py-2 bg-orange-600 rounded-full text-white font-black text-sm tracking-widest mb-4 shadow-lg">
+                                        <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span> DEBATE MODE
+                                    </div>
+                                    <div class="mb-4">
+                                        <p class="text-orange-200/80 text-xs font-bold uppercase tracking-widest mb-2">Pertanyaan Moderator</p>
+                                        <div class="bg-white/10 backdrop-blur p-4 rounded-2xl border border-white/20">
+                                            <p class="text-xl xl:text-2xl font-extrabold text-white leading-snug">"${escapeHTML(dd.question || 'Menunggu pertanyaan moderator...')}"</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-black/30 p-3 rounded-2xl border border-white/10 inline-block min-w-[160px] mb-4">
+                                        <p id="proj-timer-mode-label" class="text-orange-300 text-xs font-black uppercase tracking-widest mb-1">⏱ Sisa Waktu</p>
+                                        <div id="proj-timer-text" class="text-4xl xl:text-5xl font-black font-mono tracking-tighter text-white drop-shadow-lg">${formatTime(timerRemaining)}</div>
+                                    </div>
+                                </div>
+                                <div class="absolute -top-20 -right-20 w-64 h-64 bg-orange-500/15 rounded-full blur-[60px] pointer-events-none"></div>
+                                <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-yellow-500/15 rounded-full blur-[60px] pointer-events-none"></div>
+                            </div>
+
+                            ${renderDebateAudiencePanel()}
+                        </div>
+
+                        <!-- RIGHT: Siswa Panel -->
+                        <div class="flex flex-col h-full">
+                            <div class="flex-1 bg-emerald-900/40 backdrop-blur-2xl border ${(dd.activeSpeaker?.side === 'siswa') ? 'border-emerald-300/70 shadow-[0_0_60px_rgba(16,185,129,0.6)]' : 'border-emerald-400/30 shadow-[0_0_40px_rgba(16,185,129,0.3)]'} rounded-[2.5rem] p-6 xl:p-8 flex flex-col relative overflow-hidden transition-all duration-500">
+                                <div class="absolute inset-0 bg-gradient-to-br from-emerald-600/10 to-teal-500/10"></div>
+                                <div class="relative z-10 flex flex-col h-full">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-600 rounded-full text-white font-black text-xs tracking-widest shadow-lg uppercase">
+                                            <i class="ph-fill ph-student"></i> Panel Siswa
+                                        </div>
+                                        <div class="bg-white/10 rounded-2xl px-4 py-2 text-center border border-emerald-300/20">
+                                            <p class="text-emerald-300/70 text-[10px] font-bold uppercase tracking-widest">Skor</p>
+                                            <p class="text-3xl font-black text-white leading-none">${dd.siswaScore ?? 0}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-2 flex-1 overflow-y-auto">
+                                        ${panelistHTML(dd.siswaList, 'siswa')}
+                                    </div>
+                                    ${pointsHTML(dd.siswaPoints, 'emerald')}
+                                </div>
+                                <div class="absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/15 rounded-full blur-[60px] pointer-events-none"></div>
+                                <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-teal-500/15 rounded-full blur-[60px] pointer-events-none"></div>
+                            </div>
+                        </div>`;
+                }
+                if (tickerWrap) tickerWrap.style.display = 'none';
+                if (projBg) projBg.className = "absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-orange-950/40 transition-colors duration-1000 z-0";
+
+            } else if (eventMode === 'survey') {
+                // SURVEY MODE — PREMIUM FULLSCREEN LAYOUT
+                const mainGrid = document.querySelector('.flex-1.grid');
+                const sd = surveyData;
+                if (mainGrid) {
+                    mainGrid.className = 'flex-1 grid grid-cols-1 h-full min-h-0';
+                    const filledIssues = (sd.issues || []).filter(iss => iss.label && iss.label.trim());
+                    const maxVal = filledIssues.length > 0 ? Math.max(...filledIssues.map(i => i.value || 0)) : 100;
+
+                    const rankConfig = [
+                        { badge: 'background:#fbbf24;color:#78350f', barGrad: 'linear-gradient(90deg,#fde68a,#f59e0b,#ea580c)', glow: 'box-shadow:0 0 20px rgba(251,191,36,0.5)', pctColor: '#fbbf24' },
+                        { badge: 'background:#cbd5e1;color:#1e293b', barGrad: 'linear-gradient(90deg,#e2e8f0,#94a3b8)', glow: 'box-shadow:0 0 10px rgba(203,213,225,0.3)', pctColor: '#cbd5e1' },
+                        { badge: 'background:#d97706;color:#fef3c7', barGrad: 'linear-gradient(90deg,#f59e0b,#ea580c)', glow: 'box-shadow:0 0 12px rgba(217,119,6,0.4)', pctColor: '#fbbf24' },
+                        { badge: 'background:rgba(20,184,166,0.5);color:#ccfbf1', barGrad: 'linear-gradient(90deg,#2dd4bf,#06b6d4)', glow: '', pctColor: '#5eead4' },
+                        { badge: 'background:rgba(99,102,241,0.5);color:#e0e7ff', barGrad: 'linear-gradient(90deg,#818cf8,#3b82f6)', glow: '', pctColor: '#a5b4fc' },
+                    ];
+
+                    function surveyBarHTML(iss, rank) {
+                        const pct = maxVal > 0 ? Math.round((iss.value / maxVal) * 100) : 0;
+                        const cfg = rankConfig[rank] || rankConfig[4];
+                        const isTop = rank === 0;
+                        return `
+                        <div style="display:flex;align-items:center;gap:20px;">
+                            <div style="flex-shrink:0;width:${isTop ? '3rem' : '2.5rem'};height:${isTop ? '3rem' : '2.5rem'};border-radius:50%;${cfg.badge};display:flex;align-items:center;justify-content:center;font-size:${isTop ? '1.1rem' : '0.9rem'};font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,0.3);">${rank + 1}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+                                    <span style="color:white;font-weight:800;font-size:${isTop ? '1.6rem' : '1.3rem'};line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%;">${escapeHTML(iss.label)}</span>
+                                    <span style="color:${cfg.pctColor};font-weight:900;font-size:${isTop ? '2.2rem' : '1.8rem'};flex-shrink:0;margin-left:1rem;font-variant-numeric:tabular-nums;">${iss.value}%</span>
+                                </div>
+                                <div style="height:${isTop ? '28px' : '22px'};width:100%;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;">
+                                    <div style="height:100%;background:linear-gradient(90deg,var(--from),var(--to));border-radius:100px;width:${pct}%;transition:width 1s ease;${cfg.glow};" class="bg-gradient-to-r ${cfg.bar}"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+
+                    mainGrid.innerHTML = `
+                        <div style="flex:1;display:flex;flex-direction:column;border-radius:2.5rem;overflow:hidden;height:100%;position:relative;background:linear-gradient(145deg,#040d12 0%,#061a1f 55%,#030f0a 100%);border:1px solid rgba(20,184,166,0.22);box-shadow:0 0 80px rgba(20,184,166,0.18),inset 0 1px 0 rgba(255,255,255,0.04);">
+                            <!-- Dot grid overlay -->
+                            <div style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.18;background-image:radial-gradient(circle,rgba(20,184,166,0.5) 1px,transparent 1px);background-size:36px 36px;"></div>
+                            <!-- Glow orbs -->
+                            <div style="position:absolute;top:-160px;right:-160px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(20,184,166,0.18) 0%,transparent 70%);pointer-events:none;z-index:0;"></div>
+                            <div style="position:absolute;bottom:-160px;left:-160px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,0.13) 0%,transparent 70%);pointer-events:none;z-index:0;"></div>
+
+                            <!-- HERO HEADER -->
+                            <div style="position:relative;z-index:1;flex-shrink:0;padding:2.25rem 3rem 1.75rem;border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;">
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border-radius:100px;background:linear-gradient(90deg,rgba(20,184,166,0.85),rgba(16,185,129,0.6));box-shadow:0 0 18px rgba(20,184,166,0.35);margin-bottom:12px;">
+                                            <span style="width:8px;height:8px;border-radius:50%;background:#86efac;animation:pulse 2s infinite;display:inline-block;"></span>
+                                            <span style="color:white;font-size:0.7rem;font-weight:900;letter-spacing:0.2em;">📊 SURVEY MODE</span>
+                                        </div>
+                                        <h2 style="color:white;font-size:clamp(2rem,3.5vw,3.25rem);font-weight:900;line-height:1.15;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(sd.title || 'Hasil Survey')}</h2>
+                                    </div>
+                                    <div style="flex-shrink:0;text-align:right;">
+                                        <p style="color:rgba(94,234,212,0.65);font-size:0.65rem;font-weight:900;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:4px;">Total Responden</p>
+                                        <p style="color:white;font-size:clamp(3rem,5vw,4.5rem);font-weight:900;line-height:1;">${(sd.respondents || 0).toLocaleString('id-ID')}</p>
+                                        <p style="color:rgba(94,234,212,0.4);font-size:0.8rem;font-weight:700;margin-top:4px;">orang berpartisipasi</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BODY -->
+                            <div style="position:relative;z-index:1;flex:1;display:flex;gap:2rem;padding:1.75rem 3rem 2rem;min-height:0;overflow:hidden;">
+                                <!-- BAR CHART -->
+                                <div style="flex:1;display:flex;flex-direction:column;justify-content:space-around;min-width:0;">
+                                    <p style="color:rgba(94,234,212,0.55);font-size:0.65rem;font-weight:900;letter-spacing:0.25em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                        <span style="height:1px;width:28px;background:rgba(94,234,212,0.35);display:inline-block;"></span>
+                                        5 Isu Terbesar
+                                        <span style="height:1px;width:28px;background:rgba(94,234,212,0.35);display:inline-block;"></span>
+                                    </p>
+                                    <div style="display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:8px;">
+                                        ${filledIssues.length > 0
+                            ? filledIssues.map((iss, i) => surveyBarHTML(iss, i)).join('')
+                            : '<p style="color:rgba(255,255,255,0.25);font-style:italic;font-size:1.2rem;text-align:center;margin-top:2rem;">Belum ada data isu</p>'
+                        }
+                                    </div>
+                                </div>
+
+                                <!-- KEY FINDING -->
+                                ${sd.keyFinding ? `
+                                <div style="width:320px;flex-shrink:0;display:flex;flex-direction:column;">
+                                    <div style="flex:1;position:relative;overflow:hidden;border-radius:1.75rem;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);backdrop-filter:blur(12px);padding:2rem 2rem 1.75rem;display:flex;flex-direction:column;justify-content:space-between;">
+                                        <div style="position:absolute;top:10px;left:20px;font-size:7rem;line-height:1;font-weight:900;color:rgba(255,255,255,0.05);font-family:Georgia,serif;pointer-events:none;user-select:none;z-index:0;">&ldquo;</div>
+                                        <div style="position:absolute;bottom:5px;right:20px;font-size:7rem;line-height:1;font-weight:900;color:rgba(255,255,255,0.05);font-family:Georgia,serif;pointer-events:none;user-select:none;z-index:0;transform:rotate(180deg)">&ldquo;</div>
+                                        <div style="position:relative;z-index:1;">
+                                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                                                <div style="width:40px;height:40px;border-radius:12px;background:rgba(251,191,36,0.2);border:1px solid rgba(251,191,36,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                    <i class="ph-fill ph-lightbulb" style="color:#fbbf24;font-size:1.3rem;"></i>
+                                                </div>
+                                                <p style="color:rgba(251,191,36,0.8);font-size:0.6rem;font-weight:900;letter-spacing:0.22em;text-transform:uppercase;">💡 Temuan Penting</p>
+                                            </div>
+                                            <p style="color:white;font-size:1.25rem;font-weight:800;line-height:1.5;">${escapeHTML(sd.keyFinding)}</p>
+                                        </div>
+                                        <div style="height:3px;width:40px;background:linear-gradient(90deg,#fbbf24,transparent);border-radius:100px;margin-top:1.5rem;"></div>
+                                    </div>
+                                </div>` : ''}
+                            </div>
+                        </div>`;
+                }
+                if (tickerWrap) tickerWrap.style.display = 'none';
+                if (projBg) { projBg.className = 'absolute inset-0 transition-colors duration-1000 z-0'; projBg.style.background = 'linear-gradient(145deg, #020b10 0%, #041018 50%, #020a06 100%)'; }
+
+            } else {
+                // FALLBACK MODE
+                restoreNormalGrid();
+                const mainGridNode2 = document.querySelector('.flex-1.grid');
+                if (mainGridNode2) mainGridNode2.classList.remove('hidden');
+
+                if (tickerWrap) tickerWrap.style.display = '';
+                if (projBg) projBg.className = "absolute inset-0 bg-gradient-to-br from-blue-900 to-gray-900 transition-colors duration-1000 z-0";
+
+                updateProjectorDisplay();
+                updateTicker();
+            }
+            if (eventMode === 'debat') updateTimerModeLabel();
+        }
+
+        // --- AUTO-REFRESH every 10 seconds (smooth, no page reload) ---
+        function refreshFromStorage() {
+            aspirations = JSON.parse(localStorage.getItem('aspirations')) || [];
+            currentSpeaker = JSON.parse(localStorage.getItem('currentSpeaker')) || { name: '', major: '', topic: '' };
+            debateData = JSON.parse(localStorage.getItem('debateData')) || { question: '', guruName: '', guruTitle: '', siswaName: '', siswaTitle: '' };
+            debateResponses = JSON.parse(localStorage.getItem('debateResponses')) || { setuju: 0, tidakSetuju: 0, comments: [] };
+            openMicData = JSON.parse(localStorage.getItem('openMicData')) || { label: '', bullet1: '', bullet2: '', bullet3: '' };
+            openMic2Data = JSON.parse(localStorage.getItem('openMic2Data')) || { activeIndex: -1, issues: [] };
+            surveyData = JSON.parse(localStorage.getItem('surveyData')) || surveyData;
+            timerMode = localStorage.getItem('timerMode') || 'openmic';
+            const prevMode = eventMode;
+            eventMode = localStorage.getItem('eventMode') || 'normal';
+            loadTimerState();
+
+            if (eventMode === 'openmic' || eventMode === 'debat' || eventMode === 'survey') {
+                applyProjectorMode();
+            } else {
+                if (prevMode !== 'normal') applyProjectorMode(); // Restore from special mode
+                updateProjectorDisplay();
+                updateTicker();
+            }
+            updateTimerUI();
+
+            // Check timer expired state
+            const expired = localStorage.getItem('timerExpired') === 'true';
+            if (expired && !timerExpired) {
+                timerExpired = true;
+                showTimerExpiredOverlay();
+            } else if (!expired && timerExpired) {
+                timerExpired = false;
+                hideTimerExpiredOverlay();
+            }
+        }
+
+        setInterval(refreshFromStorage, 10000);
+
+        // --- CROSS-PAGE SYNC (Firebase listeners in shared.js update variables, this callback just re-renders) ---
+        onStorageSync((key) => {
+            if (key === 'eventMode') { applyProjectorMode(); return; }
+            if (key === 'debateData' || key === 'debateResponses') {
+                if (eventMode === 'debat') applyProjectorMode();
+                return;
+            }
+            if (key === 'openMic2Data') {
+                if (eventMode === 'normal') applyProjectorMode();
+                return;
+            }
+            if (key === 'openMicData') {
+                if (eventMode === 'openmic') applyProjectorMode();
+                return;
+            }
+            if (key === 'surveyData') {
+                if (eventMode === 'survey') applyProjectorMode();
+                return;
+            }
+            if (key === 'timerMode') {
+                if (eventMode === 'debat') updateTimerModeLabel();
+                return;
+            }
+            if (key === 'timerExpired') {
+                if (timerExpired) {
+                    showTimerExpiredOverlay();
+                } else {
+                    hideTimerExpiredOverlay();
+                }
+                return;
+            }
+            if (key === 'currentSpeaker') {
+                applyProjectorMode();
+                updateProjectorDisplay();
+                return;
+            }
+            if (eventMode === 'openmic' || eventMode === 'debat' || eventMode === 'survey') return;
+            if (key === 'aspirations') { updateProjectorDisplay(); updateTicker(); }
+            if (key === 'timerState') { updateTimerUI(); }
+        });
+
+        // --- TIMER SYNC: if timer is running, start local interval ---
+        function initProjectorTimer() {
+            loadTimerState();
+            updateTimerUI();
+            if (timerRunning && timerRemaining > 0) {
+                if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+                timerInterval = setInterval(() => {
+                    timerRemaining--;
+                    updateTimerUI();
+                    if (timerRemaining <= 0) {
+                        timerRemaining = 0;
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        timerRunning = false;
+                        timerExpired = true;
+                        localStorage.setItem('timerExpired', 'true');
+                        playBeep();
+                        showTimerExpiredOverlay();
+                        // Auto-end Open Mic / Debat on projector side
+                        if (eventMode === 'openmic' || eventMode === 'debat') {
+                            eventMode = 'normal';
+                            saveEventMode();
+                            applyProjectorMode();
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+        // --- TIMER MODE LABEL (Debate) ---
+        const TIMER_MODE_LABELS = {
+            'debat-guru': '🎓 Waktu Guru',
+            'debat-siswa': '🧑‍🎓 Waktu Siswa',
+            'debat-respon': '💬 Respon / Klarifikasi',
+            'openmic': '⏱ Sisa Waktu'
+        };
+
+        function updateTimerModeLabel() {
+            const el = document.getElementById('proj-timer-mode-label');
+            if (!el) return;
+            const label = TIMER_MODE_LABELS[timerMode] || '⏱ Sisa Waktu';
+            el.textContent = label;
+            // Color by active participant
+            el.className = [
+                'text-xs font-black uppercase tracking-widest mb-1',
+                timerMode === 'debat-guru' ? 'text-blue-300' :
+                    timerMode === 'debat-siswa' ? 'text-emerald-300' :
+                        timerMode === 'debat-respon' ? 'text-purple-300' :
+                            'text-orange-300'
+            ].join(' ');
+        }
+
+        // --- TIMER EXPIRED OVERLAY ---
+        let overlayAutoHideTimeout = null;
+
+        function showTimerExpiredOverlay() {
+            const overlay = document.getElementById('timer-expired-overlay');
+            if (overlay) {
+                overlay.style.opacity = '1';
+                overlay.style.display = 'flex';
+                // Auto-dismiss after 5 seconds
+                if (overlayAutoHideTimeout) clearTimeout(overlayAutoHideTimeout);
+                overlayAutoHideTimeout = setTimeout(() => {
+                    hideTimerExpiredOverlay();
+                }, 5000);
+            }
+        }
+
+        function hideTimerExpiredOverlay() {
+            const overlay = document.getElementById('timer-expired-overlay');
+            if (overlayAutoHideTimeout) {
+                clearTimeout(overlayAutoHideTimeout);
+                overlayAutoHideTimeout = null;
+            }
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 600); // Match the CSS transition duration
+            }
+            // Clear the expired state so overlay doesn't reappear
+            timerExpired = false;
+            localStorage.setItem('timerExpired', 'false');
+        }
+
+        // --- INIT ---
+        initChart();
+        initProjectorTimer();
+        if (eventMode === 'openmic' || eventMode === 'debat' || eventMode === 'survey') {
+            applyProjectorMode();
+        } else {
+            updateProjectorDisplay();
+            updateTicker();
+        }
+        // Show overlay if timer was already expired on page load
+        if (localStorage.getItem('timerExpired') === 'true') {
+            showTimerExpiredOverlay();
+        }
+    </script>
+</body>
+
+</html>
