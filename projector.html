@@ -196,6 +196,39 @@
         </div>
     </div>
 
+    <!-- SURVEY VISUAL PANEL (Fullscreen) -->
+    <div id="survey-visual-panel" class="hidden absolute inset-0 z-[45] bg-gradient-to-br from-gray-900 via-teal-950 to-gray-900 flex flex-col overflow-hidden">
+        <div class="relative z-10 flex-1 flex flex-col p-8 xl:p-12 h-full items-center justify-center">
+            <h2 class="text-5xl lg:text-6xl font-black text-white mb-10 tracking-widest uppercase flex items-center gap-4 text-center"><i class="ph-fill ph-check-circle text-teal-400"></i> <span id="survey-visual-title">Kesimpulan Akhir Survey</span></h2>
+            
+            <div class="flex flex-col lg:flex-row gap-10 w-full max-w-6xl mb-12 h-[350px]">
+                <div class="flex-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-[2rem] p-6 shadow-2xl relative flex flex-col">
+                    <h3 class="text-teal-300 font-bold uppercase tracking-widest text-sm text-center mb-4">Sebaran Kategori Aspirasi</h3>
+                    <div class="relative w-full flex-1 min-h-0">
+                        <canvas id="pieChartKesimpulan"></canvas>
+                    </div>
+                </div>
+                <div class="flex-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-[2rem] p-6 shadow-2xl relative flex flex-col">
+                    <h3 class="text-teal-300 font-bold uppercase tracking-widest text-sm text-center mb-4">Total Partisipasi (Votes) per Kategori</h3>
+                    <div class="relative w-full flex-1 min-h-0">
+                        <canvas id="barChartKesimpulan"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-6xl bg-gradient-to-r from-teal-500/20 to-emerald-500/20 backdrop-blur-2xl border border-teal-400/50 rounded-[2.5rem] p-10 xl:p-14 shadow-[0_0_60px_rgba(20,184,166,0.2)] text-center transform hover:scale-[1.02] transition-all relative overflow-hidden">
+                <div class="absolute -top-12 -right-8 text-[12rem] text-white/5 font-serif leading-none">"</div>
+                <div class="absolute -bottom-16 -left-8 text-[12rem] text-white/5 font-serif leading-none transform rotate-180">"</div>
+                <p id="survey-visual-text" class="text-4xl lg:text-5xl font-extrabold text-white leading-snug drop-shadow-md whitespace-pre-line relative z-10">
+                    Menunggu kesimpulan...
+                </p>
+            </div>
+        </div>
+        
+        <div class="absolute -top-32 -left-32 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+        <div class="absolute -bottom-32 -right-32 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+    </div>
+
     <!-- Firebase SDK (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -572,27 +605,12 @@
 
         // --- RENDER DEBATE AUDIENCE PANEL (helper for debate center column) ---
         function renderDebateAudiencePanel() {
-            var dr = debateResponses || { setuju: 0, tidakSetuju: 0, comments: [] };
-            var totalV = (dr.setuju || 0) + (dr.tidakSetuju || 0);
-            var pS = totalV > 0 ? Math.round(((dr.setuju || 0) / totalV) * 100) : 50;
-            var pT = totalV > 0 ? 100 - pS : 50;
+            var dr = debateResponses || { comments: [] };
             var latestComments = (dr.comments || []).slice(-5).reverse();
 
             var html = '<div class="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-5 xl:p-6 relative overflow-hidden">';
-            html += '<p class="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-2">';
-            html += '<i class="ph-fill ph-users-three text-orange-400"></i> Respons Audiens';
-            html += '<span class="ml-auto text-white/30">' + totalV + ' vote</span></p>';
-
-            // Vote Bar
-            html += '<div class="flex items-center gap-3 mb-4">';
-            html += '<div class="flex items-center gap-1.5"><i class="ph-fill ph-thumbs-up text-green-400 text-lg"></i>';
-            html += '<span class="text-green-400 font-black text-xl">' + (dr.setuju || 0) + '</span></div>';
-            html += '<div class="flex-1 h-4 bg-white/10 rounded-full overflow-hidden flex">';
-            html += '<div class="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-l-full transition-all duration-700" style="width:' + pS + '%"></div>';
-            html += '<div class="h-full bg-gradient-to-r from-red-400 to-red-500 rounded-r-full transition-all duration-700" style="width:' + pT + '%"></div>';
-            html += '</div>';
-            html += '<div class="flex items-center gap-1.5"><span class="text-red-400 font-black text-xl">' + (dr.tidakSetuju || 0) + '</span>';
-            html += '<i class="ph-fill ph-thumbs-down text-red-400 text-lg"></i></div></div>';
+            html += '<p class="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-4 flex items-center gap-2">';
+            html += '<i class="ph-fill ph-users-three text-orange-400"></i> Kiriman Tanggapan Siswa</p>';
 
             // Latest Comments
             if (latestComments.length > 0) {
@@ -614,6 +632,90 @@
             return html;
         }
 
+        let pieChartK = null;
+        let barChartK = null;
+
+        function renderKesimpulanCharts() {
+            const sd = surveyData || { issues: [], keyFinding: '', title: '' };
+            const issues = (sd.issues || []).filter(i => i.label && i.label.trim());
+            
+            const labels = issues.map(i => i.label);
+            const dataBarPie = issues.map(i => i.value || 0);
+
+            const colors = [
+                'rgba(251, 191, 36, 0.9)', // yellow
+                'rgba(203, 213, 225, 0.9)', // gray
+                'rgba(217, 119, 6, 0.9)', // amber
+                'rgba(45, 212, 191, 0.9)', // teal
+                'rgba(129, 140, 248, 0.9)'  // indigo
+            ];
+            const borderColors = [
+                'rgb(251, 191, 36)',
+                'rgb(203, 213, 225)',
+                'rgb(217, 119, 6)',
+                'rgb(45, 212, 191)',
+                'rgb(129, 140, 248)'
+            ];
+            
+            // Pie Chart
+            const ctxPie = document.getElementById('pieChartKesimpulan');
+            if (ctxPie) {
+                if (pieChartK) pieChartK.destroy();
+                pieChartK = new Chart(ctxPie.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataBarPie,
+                            backgroundColor: colors,
+                            borderColor: borderColors,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { color: 'white', font: { size: 14, weight: 'bold' } } },
+                            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)' }
+                        }
+                    }
+                });
+            }
+            
+            // Bar Chart
+            const ctxBar = document.getElementById('barChartKesimpulan');
+            if (ctxBar) {
+                if (barChartK) barChartK.destroy();
+                barChartK = new Chart(ctxBar.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Persentase/Vote',
+                            data: dataBarPie,
+                            backgroundColor: colors,
+                            borderColor: borderColors,
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)' }
+                        },
+                        scales: {
+                            x: { ticks: { color: 'white', font: { weight: 'bold' } }, grid: { display: false } },
+                            y: { ticks: { color: 'white', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                        }
+                    }
+                });
+            }
+        }
+
         // --- APPLY EVENT MODE ON PROJECTOR ---
         function applyProjectorMode() {
             const mainGrid = document.querySelector('.flex-1.grid');
@@ -621,10 +723,12 @@
             const projBg = document.getElementById('proj-bg');
             const surveyPanel = document.getElementById('survey-panel');
             const om2Panel = document.getElementById('openmic2-panel');
+            const surveyVisualPanel = document.getElementById('survey-visual-panel');
 
             // Hide exclusive panels by default
             surveyPanel.classList.add('hidden');
             om2Panel.classList.add('hidden');
+            if(surveyVisualPanel) surveyVisualPanel.classList.add('hidden');
             if (mainGrid) mainGrid.classList.add('hidden'); // default hide normal grid
 
             if (eventMode === 'normal') {
@@ -688,13 +792,29 @@
                     }
 
                     // Helper: render answer points
-                    function pointsHTML(text, color) {
+                    function pointsHTML(text, color, side) {
                         if (!text || !text.trim()) return '';
                         const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-                        return `<div class="mt-4 pt-4 border-t border-${color}-400/20">
-                            <p class="text-${color}-300/70 text-xs font-bold uppercase tracking-widest mb-2">💡 Poin Jawaban</p>
-                            <ul class="space-y-1 text-left">
-                                ${lines.map(l => `<li class="text-${color}-100 text-sm leading-snug flex gap-2"><span class="mt-0.5 text-${color}-400">•</span><span>${escapeHTML(l)}</span></li>`).join('')}
+                        const dr = debateResponses || {};
+                        const likeC = dr[side + 'Setuju'] || 0;
+                        const dislikeC = dr[side + 'TidakSetuju'] || 0;
+                        return `<div class="mt-6 pt-6 border-t-2 border-${color}-400/30">
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-${color}-300 font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                                    <i class="ph-fill ph-lightbulb text-xl text-yellow-400"></i> Poin Jawaban Utama
+                                </p>
+                                <div class="flex items-center gap-4 text-${color}-100 bg-${color}-900/60 px-4 py-1.5 rounded-full border border-${color}-400/40 shadow-inner">
+                                    <span class="flex items-center gap-2 font-black"><i class="ph-fill ph-thumbs-up text-emerald-400 text-xl"></i> ${likeC}</span>
+                                    <div class="w-px h-4 bg-${color}-400/40"></div>
+                                    <span class="flex items-center gap-2 font-black"><i class="ph-fill ph-thumbs-down text-red-400 text-xl"></i> ${dislikeC}</span>
+                                </div>
+                            </div>
+                            <ul class="space-y-4 text-left">
+                                ${lines.map(l => `
+                                    <li class="bg-${color}-800/60 border border-${color}-400/40 rounded-2xl p-4 md:p-5 text-${color}-50 text-xl lg:text-2xl xl:text-3xl font-bold leading-relaxed shadow-xl flex items-start gap-4">
+                                        <span class="mt-1 text-${color}-400 text-3xl lg:text-4xl leading-none">•</span>
+                                        <span class="flex-1 drop-shadow-md">${escapeHTML(l)}</span>
+                                    </li>`).join('')}
                             </ul>
                         </div>`;
                     }
@@ -717,7 +837,7 @@
                                     <div class="flex flex-col gap-2 flex-1 overflow-y-auto">
                                         ${panelistHTML(dd.guruList, 'guru')}
                                     </div>
-                                    ${pointsHTML(dd.guruPoints, 'blue')}
+                                    ${pointsHTML(dd.guruPoints, 'blue', 'guru')}
                                 </div>
                                 <div class="absolute -top-20 -right-20 w-64 h-64 bg-blue-500/15 rounded-full blur-[60px] pointer-events-none"></div>
                                 <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-500/15 rounded-full blur-[60px] pointer-events-none"></div>
@@ -772,7 +892,7 @@
                                     <div class="flex flex-col gap-2 flex-1 overflow-y-auto">
                                         ${panelistHTML(dd.siswaList, 'siswa')}
                                     </div>
-                                    ${pointsHTML(dd.siswaPoints, 'emerald')}
+                                    ${pointsHTML(dd.siswaPoints, 'emerald', 'siswa')}
                                 </div>
                                 <div class="absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/15 rounded-full blur-[60px] pointer-events-none"></div>
                                 <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-teal-500/15 rounded-full blur-[60px] pointer-events-none"></div>
@@ -885,6 +1005,19 @@
                 if (tickerWrap) tickerWrap.style.display = 'none';
                 if (projBg) { projBg.className = 'absolute inset-0 transition-colors duration-1000 z-0'; projBg.style.background = 'linear-gradient(145deg, #020b10 0%, #041018 50%, #020a06 100%)'; }
 
+            } else if (eventMode === 'survey-visual') {
+                if (surveyVisualPanel) surveyVisualPanel.classList.remove('hidden');
+                if (tickerWrap) tickerWrap.style.display = 'none';
+                if (projBg) projBg.className = "absolute inset-0 bg-gradient-to-br from-gray-900 via-teal-950 to-gray-900 transition-colors duration-1000 z-0";
+                
+                renderKesimpulanCharts();
+                const titleEl = document.getElementById('survey-visual-title');
+                if (titleEl) titleEl.textContent = (surveyData && surveyData.title) ? surveyData.title : 'Kesimpulan Akhir Survey';
+                const textEl = document.getElementById('survey-visual-text');
+                if (textEl) {
+                    textEl.textContent = (surveyData && surveyData.keyFinding) ? surveyData.keyFinding : 'Terima kasih atas partisipasinya.';
+                }
+
             } else {
                 // FALLBACK MODE
                 restoreNormalGrid();
@@ -914,7 +1047,7 @@
             eventMode = localStorage.getItem('eventMode') || 'normal';
             loadTimerState();
 
-            if (eventMode === 'openmic' || eventMode === 'debat' || eventMode === 'survey') {
+            if (eventMode === 'openmic' || eventMode === 'debat' || eventMode === 'survey' || eventMode === 'survey-visual') {
                 applyProjectorMode();
             } else {
                 if (prevMode !== 'normal') applyProjectorMode(); // Restore from special mode
@@ -952,7 +1085,7 @@
                 return;
             }
             if (key === 'surveyData') {
-                if (eventMode === 'survey') applyProjectorMode();
+                if (eventMode === 'survey' || eventMode === 'survey-visual') applyProjectorMode();
                 return;
             }
             if (key === 'timerMode') {
@@ -972,7 +1105,7 @@
                 updateProjectorDisplay();
                 return;
             }
-            if (eventMode === 'openmic' || eventMode === 'debat' || eventMode === 'survey') return;
+            if (eventMode === 'openmic' || eventMode === 'debat' || eventMode === 'survey' || eventMode === 'survey-visual') return;
             if (key === 'aspirations') { updateProjectorDisplay(); updateTicker(); }
             if (key === 'timerState') { updateTimerUI(); }
         });
