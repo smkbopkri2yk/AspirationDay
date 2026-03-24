@@ -2,6 +2,7 @@
 let activeLiveAspirationId = null;
 let voteNotifCount = 0;
 let previousVoteTotals = {};
+let aspirasiEnabled = localStorage.getItem('aspirasiEnabled') === 'true';
 
 // Cache vote totals for detecting new votes
 function cacheVoteTotals() {
@@ -91,6 +92,7 @@ function showAdminDashboard() {
     prefillSpeakerFields();
     cacheVoteTotals();
     updateStartButtonState();
+    updateAspirasiToggleUI();
 }
 
 function prefillSpeakerFields() {
@@ -111,6 +113,27 @@ function initAdminTimer() {
         startTimer();
     }
 }
+
+function updateAspirasiToggleUI() {
+    const btn = document.getElementById('btn-toggle-aspirasi');
+    if (!btn) return;
+    if (aspirasiEnabled) {
+        btn.innerHTML = `<i class="ph-bold ph-lock-key-open"></i> Aspirasi Dibuka`;
+        btn.className = "px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 bg-green-100 text-green-700 border border-green-200 hover:bg-green-200";
+    } else {
+        btn.innerHTML = `<i class="ph-bold ph-lock-key"></i> Aspirasi Ditutup`;
+        btn.className = "px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 bg-red-100 text-red-700 border border-red-200 hover:bg-red-200";
+    }
+}
+
+function toggleAspirasiStatus() {
+    aspirasiEnabled = !aspirasiEnabled;
+    localStorage.setItem('aspirasiEnabled', aspirasiEnabled);
+    if(typeof fbSet === 'function') fbSet('aspirasiEnabled', aspirasiEnabled);
+    updateAspirasiToggleUI();
+    showToast(aspirasiEnabled ? 'Aspirasi Siswa DIBUKA!' : 'Aspirasi Siswa DITUTUP!', aspirasiEnabled ? 'success' : 'warning');
+}
+
 
 function updateStartButtonState() {
     const startBtn = document.querySelector('[onclick="startTimer()"]');
@@ -695,6 +718,10 @@ onStorageSync((key) => {
         surveyData = JSON.parse(localStorage.getItem('surveyData')) || surveyData;
         prefillSurveyFields();
     }
+    if (key === 'aspirasiEnabled') {
+        aspirasiEnabled = localStorage.getItem('aspirasiEnabled') === 'true';
+        updateAspirasiToggleUI();
+    }
 });
 
 // ===== EVENT MODE =====
@@ -712,6 +739,7 @@ function setEventMode(mode) {
     else if (mode === 'openmic') showToast('🎙️ Open Mic Mode aktif!', 'success');
     else if (mode === 'debat') showToast('⚔️ Debate Mode aktif!', 'success');
     else if (mode === 'survey') showToast('📊 Survey Mode aktif!', 'success');
+    else if (mode === 'survey-visual') showToast('✅ Visual Kesimpulan Survey ditampilkan di layar proyektor!', 'success');
 }
 
 function updateModeUI() {
@@ -896,8 +924,32 @@ function loadQuestion(idx) {
     const q = (debateData.history || [])[idx];
     if (!q) return;
     const el = document.getElementById('debat-question');
-    if (el) el.value = q;
+    if (el) {
+        el.value = q;
+        // Clear points when question changes
+        const gp = document.getElementById('debat-guru-points');
+        const sp = document.getElementById('debat-siswa-points');
+        if (gp) gp.value = '';
+        if (sp) sp.value = '';
+        // Reset audience responses (votes & comments)
+        if (typeof resetDebateResponses === 'function') resetDebateResponses();
+    }
 }
+
+// Add event listener to clear points when admin manually changes the question
+document.addEventListener('DOMContentLoaded', () => {
+    const qEl = document.getElementById('debat-question');
+    if (qEl) {
+        qEl.addEventListener('change', () => {
+            const gp = document.getElementById('debat-guru-points');
+            const sp = document.getElementById('debat-siswa-points');
+            if (gp) gp.value = '';
+            if (sp) sp.value = '';
+            // Reset audience responses (votes & comments)
+            if (typeof resetDebateResponses === 'function') resetDebateResponses();
+        });
+    }
+});
 
 // ===== DEBATE SPLIT TIMER PRESETS =====
 const DEBATE_PRESET_DURATIONS = {
@@ -997,7 +1049,7 @@ function prefillOpenMicFields() {
 }
 
 // ===== SURVEY DATA =====
-function updateSurveyData() {
+function updateSurveyData(silent = false) {
     surveyData.title = document.getElementById('survey-title')?.value || '';
     surveyData.respondents = parseInt(document.getElementById('survey-respondents')?.value) || 0;
     surveyData.keyFinding = document.getElementById('survey-key-finding')?.value || '';
@@ -1008,13 +1060,15 @@ function updateSurveyData() {
         surveyData.issues.push({ label, value });
     }
     saveSurveyData();
-    Swal.fire({
-        icon: 'success',
-        title: 'Diperbarui!',
-        text: 'Data survey dikirim ke layar proyektor.',
-        timer: 1500,
-        showConfirmButton: false
-    });
+    if (!silent) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Diperbarui!',
+            text: 'Data survey dikirim ke layar proyektor.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
 }
 
 function prefillSurveyFields() {
