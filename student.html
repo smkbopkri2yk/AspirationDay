@@ -10,6 +10,7 @@
     <title>Portal Siswa - AspirAction 2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="shared.css">
     <style>
         /* Mobile-first optimizations */
@@ -101,10 +102,7 @@
     <!-- Student Header — compact on mobile -->
     <header
         class="bg-white/80 backdrop-blur-md shadow-sm px-4 py-3 sticky top-0 z-10 flex justify-between items-center">
-        <a href="index.html"
-            class="w-10 h-10 rounded-full hover:bg-blue-100 text-blue-600 transition inline-flex items-center justify-center tap-feedback">
-            <i class="ph-bold ph-arrow-left text-lg"></i>
-        </a>
+
         <div class="flex items-center gap-2">
             <div
                 class="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm">
@@ -235,6 +233,24 @@
         // --- SUBMIT ASPIRATION ---
         function submitAspiration(e) {
             e.preventDefault();
+            
+            const isEnabled = localStorage.getItem('aspirasiEnabled') === 'true';
+            if (!isEnabled) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Tunggu Sebentar! ✋',
+                        text: 'Sabar, Kamu Bisa Mengirim Aspirasi pada tanggal 30 Maret 2026. Aspirasimu Akan Kami Dengarkan',
+                        confirmButtonText: 'Oke, Paham!',
+                        confirmButtonColor: '#3b82f6',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                } else {
+                    alert('Sabar, Kamu Bisa Mengirim Aspirasi pada tanggal 30 Maret 2026. Aspirasimu Akan Kami Dengarkan');
+                }
+                return;
+            }
+
             const category = document.getElementById('asp-category').value;
             const text = document.getElementById('asp-text').value.trim();
             if (!text) return;
@@ -491,63 +507,80 @@
         function renderDebateParticipation(container) {
             const dd = debateData;
             const dr = debateResponses;
-            const myVote = localStorage.getItem('myDebateVote') || null; // 'setuju' | 'tidak'
+
+            // Enforce distributed audience reset via sessionId
+            const currentSession = dr.sessionId ? dr.sessionId.toString() : 'default';
+            if (localStorage.getItem('debateSessionId') !== currentSession) {
+                localStorage.setItem('debateSessionId', currentSession);
+                localStorage.removeItem('myDebateVote_guru');
+                localStorage.removeItem('myDebateVote_siswa');
+                localStorage.removeItem('myDebateCommentCount');
+            }
+
+            const myVoteGuru = localStorage.getItem('myDebateVote_guru') || null;
+            const myVoteSiswa = localStorage.getItem('myDebateVote_siswa') || null;
             const myCommentCount = parseInt(localStorage.getItem('myDebateCommentCount') || '0');
-
-            const btnSetujuStyle = myVote === 'setuju'
-                ? 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-200 scale-105'
-                : 'bg-white text-green-600 border-green-200 hover:bg-green-50';
-            const btnTidakStyle = myVote === 'tidak'
-                ? 'bg-red-600 text-white border-red-600 shadow-lg shadow-red-200 scale-105'
-                : 'bg-white text-red-500 border-red-200 hover:bg-red-50';
-
-            // Setuju/Tidak totals
-            const totalVotes = (dr.setuju || 0) + (dr.tidakSetuju || 0);
-            const pctSetuju = totalVotes > 0 ? Math.round(((dr.setuju || 0) / totalVotes) * 100) : 0;
-            const pctTidak = totalVotes > 0 ? Math.round(((dr.tidakSetuju || 0) / totalVotes) * 100) : 0;
 
             // Latest comments (max 10, newest first)
             const comments = (dr.comments || []).slice(-10).reverse();
             const canComment = myCommentCount < 3;
 
             container.innerHTML = `
-                <!-- Debate Mode Header -->
-                <div class="clay-card p-5 bg-gradient-to-br from-orange-50 to-amber-50/50 border border-orange-200 mb-4">
-                    <div class="flex items-center gap-2 mb-3">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-orange-600 rounded-full text-white text-xs font-bold tracking-wider">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span> DEBATE MODE
+                <!-- Debate Mode Header & Answers -->
+                <div class="space-y-4 mb-4">
+                    <!-- Question -->
+                    <div class="clay-card p-5 bg-gradient-to-br from-orange-50 to-amber-50/50 border border-orange-200">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 bg-orange-600 rounded-full text-white text-xs font-bold tracking-wider">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span> DEBATE MODE
+                            </div>
                         </div>
+                        <p class="text-xs text-orange-600 font-semibold uppercase tracking-wider mb-2">Pertanyaan Moderator</p>
+                        <p class="text-gray-800 font-bold text-base leading-snug">"${escapeHTML(dd.question || 'Menunggu pertanyaan moderator...')}"</p>
                     </div>
-                    <p class="text-xs text-orange-600 font-semibold uppercase tracking-wider mb-2">Pertanyaan Moderator</p>
-                    <p class="text-gray-800 font-bold text-base leading-snug">"${escapeHTML(dd.question || 'Menunggu pertanyaan moderator...')}"</p>
-                </div>
 
-                <!-- Vote Section -->
-                <div class="clay-card p-5 mb-4">
-                    <p class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="ph-fill ph-hand-fist text-orange-500"></i> Berikan Suaramu
-                    </p>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <button onclick="castDebateVote('setuju')"
-                            class="vote-btn w-full py-4 rounded-xl border-2 font-bold text-sm flex flex-col items-center justify-center gap-1.5 transition-all ${btnSetujuStyle}">
-                            <i class="ph-fill ph-thumbs-up text-3xl"></i>
-                            <span>SETUJU</span>
-                            <span class="text-xs opacity-70 font-medium">${dr.setuju || 0} suara</span>
-                        </button>
-                        <button onclick="castDebateVote('tidak')"
-                            class="vote-btn w-full py-4 rounded-xl border-2 font-bold text-sm flex flex-col items-center justify-center gap-1.5 transition-all ${btnTidakStyle}">
-                            <i class="ph-fill ph-thumbs-down text-3xl"></i>
-                            <span>TIDAK SETUJU</span>
-                            <span class="text-xs opacity-70 font-medium">${dr.tidakSetuju || 0} suara</span>
-                        </button>
-                    </div>
-                    ${totalVotes > 0 ? `
-                    <div class="flex items-center gap-2 mt-2">
-                        <div class="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden flex">
-                            <div class="h-full bg-green-500 rounded-l-full transition-all duration-500" style="width:${pctSetuju}%"></div>
-                            <div class="h-full bg-red-500 rounded-r-full transition-all duration-500" style="width:${pctTidak}%"></div>
+                    <!-- Teacher Points -->
+                    ${dd.guruPoints ? `
+                    <div class="clay-card p-4 bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-200 fade-in flex flex-col">
+                        <p class="text-xs text-blue-600 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            <i class="ph-fill ph-chalkboard-teacher text-lg"></i> Poin Jawaban Guru
+                        </p>
+                        <ul class="space-y-1.5 mb-4 flex-1">
+                            ${dd.guruPoints.split('\\n').map(l => l.trim()).filter(Boolean).map(l => `
+                            <li class="text-gray-700 text-sm leading-relaxed flex items-start gap-2">
+                                <span class="text-blue-500 font-black mt-0.5">•</span><span>${escapeHTML(l)}</span>
+                            </li>`).join('')}
+                        </ul>
+                        <div class="flex items-center gap-3 pt-3 border-t border-blue-200/60 mt-auto">
+                            <button onclick="castIndependentVote('guru', 'setuju')" class="flex-1 py-2.5 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${myVoteGuru === 'setuju' ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-[1.02]' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}">
+                                <i class="ph-fill ph-thumbs-up text-xl"></i> <span class="font-black">${dr.guruSetuju || 0}</span>
+                            </button>
+                            <button onclick="castIndependentVote('guru', 'tidak')" class="flex-1 py-2.5 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${myVoteGuru === 'tidak' ? 'bg-red-500 text-white border-red-500 shadow-md scale-[1.02]' : 'bg-white text-red-500 border-red-200 hover:bg-red-50'}">
+                                <i class="ph-fill ph-thumbs-down text-xl"></i> <span class="font-black">${dr.guruTidakSetuju || 0}</span>
+                            </button>
                         </div>
-                        <span class="text-xs text-gray-400 font-bold min-w-[3rem] text-right">${totalVotes} vote</span>
+                    </div>` : ''}
+
+                    <!-- Student Points -->
+                    ${dd.siswaPoints ? `
+                    <div class="clay-card p-4 bg-gradient-to-br from-emerald-50 to-teal-50/50 border border-emerald-200 fade-in flex flex-col">
+                        <p class="text-xs text-emerald-600 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            <i class="ph-fill ph-student text-lg"></i> Poin Jawaban Siswa
+                        </p>
+                        <ul class="space-y-1.5 mb-4 flex-1">
+                            ${dd.siswaPoints.split('\\n').map(l => l.trim()).filter(Boolean).map(l => `
+                            <li class="text-gray-700 text-sm leading-relaxed flex items-start gap-2">
+                                <span class="text-emerald-500 font-black mt-0.5">•</span><span>${escapeHTML(l)}</span>
+                            </li>`).join('')}
+                        </ul>
+                        <div class="flex items-center gap-3 pt-3 border-t border-emerald-200/60 mt-auto">
+                            <button onclick="castIndependentVote('siswa', 'setuju')" class="flex-1 py-2.5 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${myVoteSiswa === 'setuju' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]' : 'bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50'}">
+                                <i class="ph-fill ph-thumbs-up text-xl"></i> <span class="font-black">${dr.siswaSetuju || 0}</span>
+                            </button>
+                            <button onclick="castIndependentVote('siswa', 'tidak')" class="flex-1 py-2.5 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${myVoteSiswa === 'tidak' ? 'bg-red-500 text-white border-red-500 shadow-md scale-[1.02]' : 'bg-white text-red-500 border-red-200 hover:bg-red-50'}">
+                                <i class="ph-fill ph-thumbs-down text-xl"></i> <span class="font-black">${dr.siswaTidakSetuju || 0}</span>
+                            </button>
+                        </div>
                     </div>` : ''}
                 </div>
 
@@ -606,31 +639,35 @@
             `;
         }
 
-        function castDebateVote(type) {
+        function castIndependentVote(side, type) {
             // Ensure still in debate mode
             if (eventMode !== 'debat') {
                 showToast('Sesi debat sudah berakhir!', 'warning');
                 return;
             }
 
-            let myVote = localStorage.getItem('myDebateVote') || null;
+            const storageKey = 'myDebateVote_' + side;
+            let myVote = localStorage.getItem(storageKey) || null;
 
             // If same vote, do nothing
             if (myVote === type) return;
 
+            const keySetuju = side + 'Setuju';
+            const keyTidak = side + 'TidakSetuju';
+
             // Undo previous vote if switching
-            if (myVote === 'setuju') debateResponses.setuju = Math.max(0, (debateResponses.setuju || 0) - 1);
-            if (myVote === 'tidak') debateResponses.tidakSetuju = Math.max(0, (debateResponses.tidakSetuju || 0) - 1);
+            if (myVote === 'setuju') debateResponses[keySetuju] = Math.max(0, (debateResponses[keySetuju] || 0) - 1);
+            if (myVote === 'tidak') debateResponses[keyTidak] = Math.max(0, (debateResponses[keyTidak] || 0) - 1);
 
             // Apply new vote
-            if (type === 'setuju') debateResponses.setuju = (debateResponses.setuju || 0) + 1;
-            if (type === 'tidak') debateResponses.tidakSetuju = (debateResponses.tidakSetuju || 0) + 1;
+            if (type === 'setuju') debateResponses[keySetuju] = (debateResponses[keySetuju] || 0) + 1;
+            if (type === 'tidak') debateResponses[keyTidak] = (debateResponses[keyTidak] || 0) + 1;
 
-            localStorage.setItem('myDebateVote', type);
+            localStorage.setItem(storageKey, type);
             saveDebateResponses();
             renderStudentVoteList();
 
-            showToast(type === 'setuju' ? '✅ Vote Setuju dikirim!' : '❌ Vote Tidak Setuju dikirim!', 'success');
+            showToast(type === 'setuju' ? '✅ Like dikirim!' : '❌ Dislike dikirim!', 'success');
             if (window.navigator && window.navigator.vibrate) navigator.vibrate(50);
         }
 
