@@ -60,10 +60,17 @@ function saveDebateResponses() {
 }
 
 function resetDebateResponses() {
-    debateResponses = { setuju: 0, tidakSetuju: 0, comments: [] };
+    debateResponses = { 
+        guruSetuju: 0, guruTidakSetuju: 0, 
+        siswaSetuju: 0, siswaTidakSetuju: 0, 
+        comments: [],
+        sessionId: Date.now()
+    };
     saveDebateResponses();
-    // Also clear per-device tracking
+    // Also clear per-device tracking on this device just in case
     localStorage.removeItem('myDebateVote');
+    localStorage.removeItem('myDebateVote_guru');
+    localStorage.removeItem('myDebateVote_siswa');
     localStorage.removeItem('myDebateCommentCount');
 }
 
@@ -494,6 +501,14 @@ function initFirebaseListeners() {
     fbListen('timerExpired', (val) => {
         timerExpired = val === true;
         localStorage.setItem('timerExpired', timerExpired ? 'true' : 'false');
+    });
+
+    // Aspirasi Enabled Status
+    fbListen('aspirasiEnabled', (val) => {
+        if (val !== null && val !== undefined) {
+            localStorage.setItem('aspirasiEnabled', val ? 'true' : 'false');
+        }
+        if (_firebaseInitialized && _onFirebaseUpdate) _onFirebaseUpdate('aspirasiEnabled');
     });
 
     // Mark initialization complete after a short delay to let initial values load
