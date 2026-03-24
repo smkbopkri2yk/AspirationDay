@@ -69,7 +69,12 @@
             <div id="admin-tab-moderasi" class="space-y-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
-                        <h2 class="text-3xl font-extrabold text-gray-800">Live Moderasi</h2>
+                        <div class="flex items-center gap-4 mb-1">
+                            <h2 class="text-3xl font-extrabold text-gray-800">Live Moderasi</h2>
+                            <button onclick="toggleAspirasiStatus()" id="btn-toggle-aspirasi" class="px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 bg-red-100 text-red-700 border border-red-200 hover:bg-red-200">
+                                <i class="ph-bold ph-lock-key"></i> Aspirasi Ditutup
+                            </button>
+                        </div>
                         <p class="text-gray-500">Filter, sortir, dan proyeksikan aspirasi terbaik.</p>
                     </div>
                     <div class="flex items-center gap-3">
@@ -80,7 +85,7 @@
                         </button>
                         <div class="clay-card px-4 py-2 flex items-center gap-2 font-bold text-blue-600">
                             <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span><span
-                                id="live-count">0</span> Aspirasi Menunggu
+                                id="live-count">0</span> Menunggu
                         </div>
                     </div>
                 </div>
@@ -116,21 +121,21 @@
                 <div class="clay-card p-5 mb-2">
                     <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Pilih Mode Acara</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <button onclick="setEventMode('normal')" id="mode-btn-normal"
-                            class="p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-2 border-blue-500 bg-blue-50 text-blue-700">
-                            <i class="ph-fill ph-broadcast text-2xl"></i> Normal (Open Mic 2)
+                        <button onclick="setEventMode('survey')" id="mode-btn-survey"
+                            class="p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-2 border-gray-200 bg-white text-gray-500 hover:border-green-400">
+                            <i class="ph-fill ph-chart-bar text-2xl"></i> Survey
                         </button>
                         <button onclick="setEventMode('openmic')" id="mode-btn-openmic"
                             class="p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-2 border-gray-200 bg-white text-gray-500 hover:border-purple-400">
-                            <i class="ph-fill ph-microphone-stage text-2xl"></i> Open Mic
+                            <i class="ph-fill ph-microphone-stage text-2xl"></i> Open Mic 1
+                        </button>
+                        <button onclick="setEventMode('normal')" id="mode-btn-normal"
+                            class="p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-2 border-blue-500 bg-blue-50 text-blue-700">
+                            <i class="ph-fill ph-broadcast text-2xl"></i> Open Mic 2
                         </button>
                         <button onclick="setEventMode('debat')" id="mode-btn-debat"
                             class="p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-2 border-gray-200 bg-white text-gray-500 hover:border-orange-400">
                             <i class="ph-fill ph-sword text-2xl"></i> Debat
-                        </button>
-                        <button onclick="setEventMode('survey')" id="mode-btn-survey"
-                            class="p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-2 border-gray-200 bg-white text-gray-500 hover:border-green-400">
-                            <i class="ph-fill ph-chart-bar text-2xl"></i> Survey
                         </button>
                     </div>
                 </div>
@@ -710,12 +715,20 @@
                             </div>
 
                             <!-- CTA Button -->
-                            <button onclick="updateSurveyData()"
-                                class="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] transition-all duration-200"
-                                style="background: linear-gradient(130deg, #16a34a, #0d9488);">
-                                <i class="ph-bold ph-projector-screen text-lg"></i>
-                                Update ke Proyektor
-                            </button>
+                            <div class="flex flex-col gap-3 mt-4">
+                                <button onclick="updateSurveyData()"
+                                    class="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] transition-all duration-200"
+                                    style="background: linear-gradient(130deg, #16a34a, #0d9488);">
+                                    <i class="ph-bold ph-projector-screen text-lg"></i>
+                                    Update Survey (Biasa)
+                                </button>
+                                <button onclick="updateSurveyData(true); setEventMode('survey-visual');"
+                                    class="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-200"
+                                    style="background: linear-gradient(130deg, #3b82f6, #6366f1);">
+                                    <i class="ph-bold ph-arrow-right text-lg"></i>
+                                    NEXT (Visualisasi Pie & Bar Chart)
+                                </button>
+                            </div>
 
                             <div
                                 class="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-semibold">
@@ -774,6 +787,12 @@
             </div>
         </main>
     </section>
+
+    <!-- Projector Preview -->
+    <div id="projector-preview-container" class="fixed top-6 right-6 w-64 aspect-video bg-black rounded-lg shadow-xl border-2 border-white overflow-hidden z-[100] pointer-events-none hidden md:block">
+        <iframe src="projector.html" class="w-[1920px] h-[1080px] origin-top-left pointer-events-none" style="transform: scale(0.133333); border: none;"></iframe>
+        <div class="absolute bottom-1 right-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur">Proyektor Live</div>
+    </div>
 
     <!-- Modal Overlay -->
     <div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
